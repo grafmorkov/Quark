@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/mnt/data/Languages/C_Projects/Quark/build/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

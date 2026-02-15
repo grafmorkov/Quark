@@ -1,3 +1,0 @@
-/mnt/data/Languages/C_Projects/Quark/build/CMakeFiles/quark.dir
-/mnt/data/Languages/C_Projects/Quark/build/CMakeFiles/edit_cache.dir
-/mnt/data/Languages/C_Projects/Quark/build/CMakeFiles/rebuild_cache.dir
