@@ -1,12 +1,17 @@
 #include <stdio.h>
 
-#include "wordlist.h"
+#include "vector.h"
 #include "lexer.h"
 
 int main(int argc, char **argv)
 {
-    size_t *out_count;
-    WordList list = lex(argv[0]);
+    Vector txt;
+
+    if(!lex(argv[0], txt)){
+        fprintf(stderr, "Lexing failed\n");
+            return 1;
+    }
+    vector_free(&txt);
 
     return 0;
 }

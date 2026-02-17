@@ -2,8 +2,8 @@
 #define LEXER_H
 
 #include <stdio.h>
-#include "wordlist.h"
+#include "vector.h"
 #include "token.h"
 
-WordList lex(const char *fileName);
+int lex(const char *fileName, Vector *out);
 #endif

@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include "string.h"
+#include <stdlib.h>
 
 #define STRING_INITIAL_CAP 16
 
@@ -52,6 +52,4 @@ void string_clear(String *str) {
         str->data[0] = '\0';
 }
 
-const char *string_c_str(const String *str) {
-    return str->data;
-}
+const char *string_c_str(const String *str) { return str->data; }

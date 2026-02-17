@@ -2,41 +2,57 @@
 #include <ctype.h>
 
 #include "lexer.h"
-#include "wordlist.h"
+#include "../include/string.h"
+#include "../include/vector.h"
 
-WordList lex(const char *fileName) {
+int lex(const char *fileName, Vector *out) {
 
-    WordList words;
-    wordlist_init(&words);
+    if (!vector_init(out, sizeof(String)))
+        return 0;
 
     FILE *file = fopen(fileName, "r");
     if (!file) {
-        perror("P_ERROR");
-        return words;
+        vector_free(out);
+        return 0;
     }
 
     String current;
-    string_init(&current);
+    if (!string_init(&current)) {
+        fclose(file);
+        vector_free(out);
+        return 0;
+    }
 
     int ch;
 
     while ((ch = fgetc(file)) != EOF) {
         if (isalnum(ch)) {
-            string_append_char(&current, (char)ch);
+            if (!string_append_char(&current, (char)ch))
+                goto error;
         }
         else if (current.length > 0) {
 
-            wordlist_add(&words, &current);
+            if (!vector_push_back(out, &current))
+                goto error;
 
-            string_init(&current);
+            if (!string_init(&current))
+                goto error;
         }
     }
 
     if (current.length > 0) {
-        wordlist_add(&words, &current);
+        if (!vector_push_back(out, &current))
+            goto error;
     } else {
         string_free(&current);
     }
+
     fclose(file);
-    return words;
+    return 1;
+
+error:
+    string_free(&current);
+    fclose(file);
+    vector_free(out);
+    return 0;
 }
