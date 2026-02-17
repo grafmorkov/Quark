@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 {
     Vector txt;
 
-    if(!lex(argv[0], txt)){
+    if(!lex(argv[0], &txt)){
         fprintf(stderr, "Lexing failed\n");
             return 1;
     }

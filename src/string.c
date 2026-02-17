@@ -1,5 +1,6 @@
-#include "string.h"
 #include <stdlib.h>
+
+#include "utils/string.h"
 
 #define STRING_INITIAL_CAP 16
 

@@ -2,7 +2,7 @@
 #define TOKEN_H
 
 #include <stdio.h>
-#include <string.h>
+#include "utils/string.h"
 
 typedef struct{
   int id;

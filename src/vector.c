@@ -1,7 +1,7 @@
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
-#include "../include/vector.h"
+#include "vector.h"
 
 #define VEC_INIT_CAP 16
 

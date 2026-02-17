@@ -2,8 +2,8 @@
 #include <ctype.h>
 
 #include "lexer.h"
-#include "../include/string.h"
-#include "../include/vector.h"
+#include "utils/string.h"
+#include "vector.h"
 
 int lex(const char *fileName, Vector *out) {
 
