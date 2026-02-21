@@ -2,12 +2,13 @@
 #include <ctype.h>
 
 #include "lexer.h"
-#include "utils/string.h"
+#include "token.h"
+#include "str.h"
 #include "vector.h"
 
 int lex(const char *fileName, Vector *out) {
 
-    if (!vector_init(out, sizeof(String)))
+    if (!vector_init(out, sizeof(Token)))
         return 0;
 
     FILE *file = fopen(fileName, "r");
@@ -26,22 +27,18 @@ int lex(const char *fileName, Vector *out) {
     int ch;
 
     while ((ch = fgetc(file)) != EOF) {
-        if (isalnum(ch)) {
+        if (isalnum(ch) && !isspace(ch)) {
             if (!string_append_char(&current, (char)ch))
                 goto error;
         }
         else if (current.length > 0) {
-
-            if (!vector_push_back(out, &current))
-                goto error;
-
-            if (!string_init(&current))
+            if (!create_new_token(string_c_str(&current), out))
                 goto error;
         }
     }
 
     if (current.length > 0) {
-        if (!vector_push_back(out, &current))
+        if (!create_new_token(string_c_str(&current), out))
             goto error;
     } else {
         string_free(&current);

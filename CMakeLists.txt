@@ -10,5 +10,4 @@ add_executable(quark ${SOURCES})
 # Указываем путь к include для таргета
 target_include_directories(quark PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/include/utils
 )

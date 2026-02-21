@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 typedef struct{
     void *data;
     size_t capacity;

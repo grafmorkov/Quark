@@ -1,12 +1,18 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include <stdio.h>
-#include "utils/string.h"
+#include "vector.h"
 
 typedef struct{
   int id;
-  String name;
+  const char *name;
 }Token;
+
+int create_new_token(const char *name, Vector *tokens);
+
+typedef struct {
+  const char *name;
+  const char *tokenName;
+} Def;
 
 #endif
