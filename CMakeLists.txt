@@ -1,13 +1,27 @@
 cmake_minimum_required(VERSION 3.20)
-project(MyCProject VERSION 1.0 LANGUAGES C)
 
-# Находим все .c файлы
-file(GLOB SOURCES "src/*.c")
+project(Quark VERSION 1.0 LANGUAGES C)
 
-# Создаём исполняемый файл
-add_executable(quark ${SOURCES})
+# C standard
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
-# Указываем путь к include для таргета
-target_include_directories(quark PRIVATE
-    ${PROJECT_SOURCE_DIR}/include
+# Library libquark
+add_library(libquark
+        core/lexer.c
+        core/token.c
+)
+
+target_include_directories(libquark
+        PUBLIC ${PROJECT_SOURCE_DIR}/include
+)
+
+# Executable file Quark
+add_executable(quark
+        app/main.c
+)
+
+target_link_libraries(quark
+        PRIVATE libquark
 )
