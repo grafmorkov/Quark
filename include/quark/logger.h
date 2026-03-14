@@ -1,35 +1,44 @@
 #ifndef QUARK_LOGGER_H
 #define QUARK_LOGGER_H
 
-#include <stdio.h>
-#include <time.h>
+#include <iostream>
+#include <string_view>
+#include <cstdlib>
+#include <chrono>
+#include "colors.h" 
 
-#include "quark/colors.h"
+using namespace quark::colors;
 
-#define GET_TIME() ({ \
-    clock_t c = clock(); \
-    (double)c * 1000 / CLOCKS_PER_SEC; \
-})
+namespace quark {
 
-#define LOG_INFO(txt) do { \
-    printf("(%f ms) INFO: %s\n", GET_TIME(), txt); \
-} while(0)
+inline double get_time_ms() {
+    using namespace std::chrono;
+    static auto start_time = high_resolution_clock::now();
+    auto now = high_resolution_clock::now();
+    return duration<double, std::milli>(now - start_time).count();
+}
 
-#define LOG_WARN(txt) do { \
-    SET_COLOR(YELLOW); \
-    printf("(%f ms) WARN: %s\n", GET_TIME(), txt); \
-    RESET_COLOR(); \
-} while(0)
+inline void log_info(std::string_view msg) {
+    std::cout << "(" << get_time_ms() << " ms) INFO: " << msg << '\n';
+}
 
-#define LOG_ERROR(txt) do { \
-    SET_COLOR(RED); \
-    fprintf(stderr, "(%f ms) ERROR: %s\n", GET_TIME(), txt); \
-    RESET_COLOR(); \
-} while(0)
+inline void log_warn(std::string_view msg) {
+    set_color(YELLOW);
+    std::cout << "(" << get_time_ms() << " ms) WARN: " << msg << '\n';
+    reset_color();
+}
 
-#define FATAL(txt) do { \
-    LOG_ERROR(txt); \
-    exit(1); \
-} while(0)
+inline void log_error(std::string_view msg) {
+    set_color(RED);
+    std::cerr << "(" << get_time_ms() << " ms) ERROR: " << msg << '\n';
+    reset_color();
+}
 
-#endif
+[[noreturn]] inline void fatal(std::string_view msg) {
+    log_error(msg);
+    std::exit(1);
+}
+
+} // namespace quark
+
+#endif // QUARK_LOGGER_H

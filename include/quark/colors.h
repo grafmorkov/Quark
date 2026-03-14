@@ -1,44 +1,55 @@
-//
-// Created by GrafMorkov on 27.02.2026.
-//
-
 #ifndef QUARK_COLOR_H
 #define QUARK_COLOR_H
 
-#include <stdio.h>
+#include <iostream>
+
+namespace quark::colors {
 
 #ifdef _WIN32
 #include <windows.h>
 
-// Windows colors
-#define BLACK   0
-#define BLUE    FOREGROUND_BLUE
-#define GREEN   FOREGROUND_GREEN
-#define CYAN    (FOREGROUND_GREEN | FOREGROUND_BLUE)
-#define RED     FOREGROUND_RED
-#define MAGENTA (FOREGROUND_RED | FOREGROUND_BLUE)
-#define YELLOW  (FOREGROUND_RED | FOREGROUND_GREEN)
-#define WHITE   (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
-#define BRIGHT  FOREGROUND_INTENSITY
+inline void set_color(WORD color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color | FOREGROUND_INTENSITY);
+}
 
-#define SET_COLOR(color) SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color | BRIGHT)
-#define RESET_COLOR() SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), WHITE)
+inline void reset_color() {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),
+        FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+}
+
+// Color codes
+constexpr WORD BLACK   = 0;
+constexpr WORD BLUE    = FOREGROUND_BLUE;
+constexpr WORD GREEN   = FOREGROUND_GREEN;
+constexpr WORD CYAN    = FOREGROUND_GREEN | FOREGROUND_BLUE;
+constexpr WORD RED     = FOREGROUND_RED;
+constexpr WORD MAGENTA = FOREGROUND_RED | FOREGROUND_BLUE;
+constexpr WORD YELLOW  = FOREGROUND_RED | FOREGROUND_GREEN;
+constexpr WORD WHITE   = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 
 #else
 // Unix-like ANSI escape codes
-#define BLACK   "0;30"
-#define RED     "0;31"
-#define GREEN   "0;32"
-#define YELLOW  "0;33"
-#define BLUE    "0;34"
-#define MAGENTA "0;35"
-#define CYAN    "0;36"
-#define WHITE   "0;37"
-#define BRIGHT  "1"
+inline void set_color(const char* color_code) {
+    std::cout << "\033[" << color_code << "m";
+}
 
-#define SET_COLOR(color) printf("\033[%sm", color)
-#define RESET_COLOR()    printf("\033[0m")
+inline void reset_color() {
+    std::cout << "\033[0m";
+}
+
+// Color codes
+constexpr const char* BLACK   = "0;30";
+constexpr const char* RED     = "0;31";
+constexpr const char* GREEN   = "0;32";
+constexpr const char* YELLOW  = "0;33";
+constexpr const char* BLUE    = "0;34";
+constexpr const char* MAGENTA = "0;35";
+constexpr const char* CYAN    = "0;36";
+constexpr const char* WHITE   = "0;37";
+constexpr const char* BRIGHT  = "1";
 
 #endif
 
-#endif //QUARK_COLOR_H
+} // namespace quark::colors
+
+#endif // QUARK_COLOR_H
