@@ -5,11 +5,12 @@
 #include <string_view>
 #include <cstdlib>
 #include <chrono>
+#include <sstream>
 #include "colors.h" 
 
 using namespace quark::colors;
 
-namespace quark {
+namespace quark::logger {
 
 inline double get_time_ms() {
     using namespace std::chrono;
@@ -18,24 +19,35 @@ inline double get_time_ms() {
     return duration<double, std::milli>(now - start_time).count();
 }
 
-inline void log_info(std::string_view msg) {
-    std::cout << "(" << get_time_ms() << " ms) INFO: " << msg << '\n';
+template<typename... Args>
+inline std::string format(Args&&... args) {
+    std::ostringstream oss;
+    (oss << ... << args);
+    return oss.str();
 }
 
-inline void log_warn(std::string_view msg) {
+template<typename... Args>
+inline void log_info(Args&&... args) {
+    std::cout << "(" << get_time_ms() << " ms): " << format(std::forward<Args>(args)...) << '\n';
+}
+
+template<typename... Args>
+inline void log_warn(Args&&... args) {
     set_color(YELLOW);
-    std::cout << "(" << get_time_ms() << " ms) WARN: " << msg << '\n';
+    std::cout << "(" << get_time_ms() << " ms): " << format(std::forward<Args>(args)...) << '\n';
     reset_color();
 }
 
-inline void log_error(std::string_view msg) {
+template<typename... Args>
+inline void log_error(Args&&... args) {
     set_color(RED);
-    std::cerr << "(" << get_time_ms() << " ms) ERROR: " << msg << '\n';
+    std::cerr << "(" << get_time_ms() << " ms): " << format(std::forward<Args>(args)...) << '\n';
     reset_color();
 }
 
-[[noreturn]] inline void fatal(std::string_view msg) {
-    log_error(msg);
+template<typename... Args>
+[[noreturn]] inline void fatal(Args&&... args) {
+    log_error(std::forward<Args>(args)...);
     std::exit(1);
 }
 

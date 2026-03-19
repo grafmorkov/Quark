@@ -1,20 +1,57 @@
 #ifndef QUARK_LEXER_H
 #define QUARK_LEXER_H
 
-#include <stdio.h>
-#include "token.h"
+#include <iostream>
+#include <string>
+#include <fstream> 
+#include <string> 
+#include <vector>
 
-namespace quark{
+#include "quark/token.h"
+#include "quark/logger.h"
 
-typedef struct {
-    const char *start;  
-    const char *current; 
-    int line;    
-    const char *file;    
-} Lexer;
+namespace quark::lx{
 
-Token lexing(const char *fileName); 
+    class Lexer {
+        private:
+            std::string buffer;
+            size_t pos;
+            int start;
+            int line;
+            int column;
 
-Token next_token(Lexer* lex);
+            int token_line;
+            int token_column;
+
+            char peek();
+            char advance();
+            bool match(char expected);
+            bool is_at_end();
+
+            Token make_token(TokenType);
+            Token make_number();
+
+            Token number();
+            Token identifier();
+            Token string();
+
+        public:
+            Token next_token();
+            
+        Lexer(const char *fileName){
+            std::ifstream f(fileName, std::ios::binary); 
+
+            if (!f) 
+                logger::fatal("Failed to read the file while creating lexer!"); 
+
+            buffer = std::string( 
+                (std::istreambuf_iterator<char>(f)), 
+                std::istreambuf_iterator<char>() );
+            pos = 0;
+            start = 0;
+            line = 1;
+            column = 1;
+        }
+    };
 }
 #endif

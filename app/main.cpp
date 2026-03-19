@@ -7,11 +7,15 @@ using namespace quark;
 
 int main(int argc, char **argv)
 {
-    Token token;
+    lx::Lexer lex(argv[1]);
 
-    while((token = lexing(argv[0])).type != TOKEN_EOF){
-        quark::log_info(token.text);
-        // TODO: Adding to parcer
+    Token token;
+    while ((token = lex.next_token()).type != TOKEN_EOF) {
+        if(token.type == TOKEN_ILLEGAL){
+            logger::log_error("Unexpected character:\"", token.text, "\" loc: ", token.line, ";", token.column);
+            continue;
+        }
+        logger::log_info(token.text, " type:", token.type);
     }
     return 0;
 }

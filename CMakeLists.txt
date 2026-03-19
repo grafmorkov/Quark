@@ -10,7 +10,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Library libquark (C++ files)
 add_library(libquark
     core/lexer.cpp
-    core/parcer.cpp
 )
 
 target_include_directories(libquark
