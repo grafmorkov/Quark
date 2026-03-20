@@ -40,6 +40,7 @@ namespace quark::ps {
         if (match(TOKEN_FLOAT))   { parse_var(); return; }
         if (match(TOKEN_RETURN)) { parse_return(); return; }
         if (match(TOKEN_IF))     { parse_if(); return; }
+        if (match(TOKEN_FN))     { parse_fn(); return; }
         if (match(TOKEN_WHILE))  { parse_while(); return; }
         
         parse_expr();
@@ -66,6 +67,14 @@ namespace quark::ps {
         parse_block();
         if (match(TOKEN_ELSE)) parse_block();
     }
+    void Parser::parse_fn(){
+        expect(TOKEN_IDENT, "Expected function name");
+        expect(TOKEN_LPAREN, "Expected '(' after the name of the function");
+        parse_fn_args();
+        expect(TOKEN_RPAREN, "Expected ')'");
+        expect(TOKEN_VOID, "Expected the return type");
+        parse_block();
+    }
 
     void Parser::parse_while() {
         expect(TOKEN_LPAREN, "Expected '(' after 'while'");
@@ -81,10 +90,45 @@ namespace quark::ps {
         }
         expect(TOKEN_RBRACE, "Expected '}'");
     }
+    void Parser::parse_fn_args() {
+        if (check(TOKEN_RPAREN)) return;
+
+        while (true) {
+            if (!check(TOKEN_INT) && !check(TOKEN_FLOAT)) {
+                logger::log_error("Expected argument type, got: ", current.text,
+                                " at ", current.line, ":", current.column);
+                advance();
+                if (check(TOKEN_RPAREN)) break;
+            } else {
+                advance();
+            }
+
+            expect(TOKEN_IDENT, "Expected argument name after type");
+
+            if (match(TOKEN_COMMA)) {
+                continue;
+            }
+            if (check(TOKEN_RPAREN)) {
+                break;
+            }
+            logger::log_error("Expected ',' or ')' after function argument, got: ", current.text,
+                            " at ", current.line, ":", current.column);
+            advance();
+            if (check(TOKEN_RPAREN)) break;
+        }
+    }
 
     // Statements
+    void Parser::parse_expr()       { parse_assigment(); }
 
-    void Parser::parse_expr()       { parse_equality(); }
+    void Parser::parse_assigment() {
+        parse_equality();
+        
+        if (check(TOKEN_EQ)) {
+            advance();
+            parse_assigment();
+        }
+    }
 
     void Parser::parse_equality() {
         parse_comparison();

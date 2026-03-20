@@ -23,6 +23,7 @@ namespace quark{
             case TOKEN_FN: return "FN";
 
             // types
+            case TOKEN_VOID: return "VOID";
             case TOKEN_INT: return "INT";
             case TOKEN_FLOAT: return "FLOAT";
 

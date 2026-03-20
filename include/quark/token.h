@@ -24,6 +24,7 @@ namespace quark{
         TOKEN_FN,
 
         // types
+        TOKEN_VOID,
         TOKEN_INT,
         TOKEN_FLOAT,
 

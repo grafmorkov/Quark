@@ -62,6 +62,13 @@ namespace quark::lx {
         }
 
         switch (c) {
+            case '(': return make_token(TOKEN_LPAREN);
+            case ')': return make_token(TOKEN_RPAREN);
+            case '{': return make_token(TOKEN_LBRACE);
+            case '}': return make_token(TOKEN_RBRACE);
+            case '[': return make_token(TOKEN_LBRACKET);
+            case ']': return make_token(TOKEN_RBRACKET);
+            case ',': return make_token(TOKEN_COMMA);
             case '=': return make_token(match('=') ? TOKEN_EQEQ : TOKEN_EQ);
             case '!': return make_token(match('=') ? TOKEN_NEQ : TOKEN_NOT);
             case '<': return make_token(match('=') ? TOKEN_LTE : TOKEN_LT);
@@ -148,6 +155,8 @@ namespace quark::lx {
             case str_hash("fn"): return make_token(TOKEN_FN);
 
             case str_hash("int"): return make_token(TOKEN_INT);
+            case str_hash("float"): return make_token(TOKEN_FLOAT);
+            case str_hash("void"): return make_token(TOKEN_VOID);
         }
         return make_token(TOKEN_IDENT);
     }

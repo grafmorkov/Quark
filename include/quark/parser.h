@@ -35,12 +35,15 @@ namespace quark::ps {
         void parse_factor();
         void parse_unary();
         void parse_primary();
+        void parse_assigment();
 
         // Statements
         void parse_statement();
         void parse_var();
         void parse_return();
         void parse_if();
+        void parse_fn();
+        void parse_fn_args();
         void parse_while();
         void parse_block();
 
