@@ -7,6 +7,10 @@
 #include "quark/logger.h"
 #include "quark/token.h"
 
+constexpr unsigned int str_hash(const char* str, int h = 0){
+        return !str[h] ? 5381 : (str_hash(str, h + 1) * 33) ^ str[h];
+}
+
 namespace quark::lx {
 
     char Lexer::peek() {
@@ -58,22 +62,14 @@ namespace quark::lx {
         }
 
         switch (c) {
-            case '=': 
-                return make_token(match('=') ? TOKEN_EQEQ : TOKEN_EQ);
-            case '!': 
-                return make_token(match('=') ? TOKEN_NEQ : TOKEN_NOT);
-            case '<': 
-                return make_token(match('=') ? TOKEN_LTE : TOKEN_LT);
-            case '>': 
-                return make_token(match('=') ? TOKEN_GTE : TOKEN_GT);
-            case '+': 
-                return make_token(TOKEN_PLUS);
-            case '-': 
-                return make_token(TOKEN_MINUS);
-            case '*': 
-                return make_token(TOKEN_STAR);
-            case ';':
-                return make_token(TOKEN_SEMICOLON);
+            case '=': return make_token(match('=') ? TOKEN_EQEQ : TOKEN_EQ);
+            case '!': return make_token(match('=') ? TOKEN_NEQ : TOKEN_NOT);
+            case '<': return make_token(match('=') ? TOKEN_LTE : TOKEN_LT);
+            case '>': return make_token(match('=') ? TOKEN_GTE : TOKEN_GT);
+            case '+': return make_token(TOKEN_PLUS);
+            case '-': return make_token(TOKEN_MINUS);
+            case '*': return make_token(TOKEN_STAR);
+            case ';': return make_token(TOKEN_SEMICOLON);
             case '/':
                 if (match('/')) {
                     while (peek() != '\n' && !is_at_end()) advance();
@@ -98,7 +94,6 @@ namespace quark::lx {
             default: return make_token(TOKEN_ILLEGAL);
         }
     }
-
     Token Lexer::make_token(TokenType type) {
         return Token{
             type,
@@ -145,12 +140,16 @@ namespace quark::lx {
 
         std::string text(buffer.data() + start, pos - start);
 
-        if (text == "if")     return make_token(TOKEN_IF);
-        else if (text == "else")   return make_token(TOKEN_ELSE);
-        else if (text == "while")  return make_token(TOKEN_WHILE);
-        else if (text == "return") return make_token(TOKEN_RETURN);
+        switch(str_hash(text.c_str())) {
+            case str_hash("if"): return make_token(TOKEN_IF);
+            case str_hash("else"): return make_token(TOKEN_ELSE);
+            case str_hash("while"):return make_token(TOKEN_WHILE);
+            case str_hash("return"):return make_token(TOKEN_RETURN);
+            case str_hash("fn"): return make_token(TOKEN_FN);
 
-        return make_token(TOKEN_ILLEGAL);
+            case str_hash("int"): return make_token(TOKEN_INT);
+        }
+        return make_token(TOKEN_IDENT);
     }
     Token Lexer::string() {
         while (peek() != '"' && !is_at_end()) {
@@ -166,5 +165,4 @@ namespace quark::lx {
         advance();
         return make_token(TOKEN_STRING);
     }
-
 }

@@ -1,6 +1,8 @@
 #ifndef QUARK_TOKEN_H
 #define QUARK_TOKEN_H
 
+#include <iostream>
+#include <string>
 #include <string_view>
 
 namespace quark{
@@ -10,7 +12,7 @@ namespace quark{
         TOKEN_ILLEGAL,
 
         // identifiers & literals
-        TOKEN_IDENTIFIER,
+        TOKEN_IDENT,
         TOKEN_NUMBER,
         TOKEN_STRING,
 
@@ -19,6 +21,11 @@ namespace quark{
         TOKEN_ELSE,
         TOKEN_WHILE,
         TOKEN_RETURN,
+        TOKEN_FN,
+
+        // types
+        TOKEN_INT,
+        TOKEN_FLOAT,
 
         // operators
         TOKEN_PLUS,      // +
@@ -59,6 +66,6 @@ namespace quark{
         int line;
         int column;
     };
-    
+    std::string token_type_to_string(TokenType type);
 }
 #endif /// TOKEN
