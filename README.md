@@ -68,4 +68,4 @@ If you want to help develop Quark, feel free to open issues, submit pull request
 
 ## License
 
-This project is licensed under the **[GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.html)
+This project is licensed under the **[GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.html)**

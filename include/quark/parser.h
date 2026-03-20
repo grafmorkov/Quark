@@ -6,7 +6,6 @@
 
 #include "quark/token.h"
 #include "quark/lexer.h"
-#include "quark/ast.h"
 
 namespace quark::ps {
     class Parser {
