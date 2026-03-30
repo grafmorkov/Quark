@@ -77,6 +77,7 @@ namespace quark::lx {
             case '-': return make_token(TOKEN_MINUS);
             case '*': return make_token(TOKEN_STAR);
             case ';': return make_token(TOKEN_SEMICOLON);
+            case ':': return make_token(match('=') ? TOKEN_CEQ: TOKEN_COLON);
             case '/':
                 if (match('/')) {
                     while (peek() != '\n' && !is_at_end()) advance();
@@ -111,19 +112,10 @@ namespace quark::lx {
         };
     }
     Token Lexer::make_number() {
-        double value = std::stod(
+        Token tok = make_token(TOKEN_NUMBER);
+        tok.number = std::stod(
             std::string(buffer.data() + start, pos - start)
         );
-
-        Token tok{
-            TOKEN_NUMBER,
-            std::string_view(buffer.data() + start, pos - start),
-            {},
-            token_line,
-            token_column
-        };
-
-        tok.number = value;
         return tok;
     }
     Token Lexer::number() {
@@ -152,11 +144,13 @@ namespace quark::lx {
             case str_hash("else"): return make_token(TOKEN_ELSE);
             case str_hash("while"):return make_token(TOKEN_WHILE);
             case str_hash("return"):return make_token(TOKEN_RETURN);
-            case str_hash("fn"): return make_token(TOKEN_FN);
+            case str_hash("func"): return make_token(TOKEN_FUNC);
+            case str_hash("var"): return make_token(TOKEN_VAR);
 
             case str_hash("int"): return make_token(TOKEN_INT);
             case str_hash("float"): return make_token(TOKEN_FLOAT);
             case str_hash("void"): return make_token(TOKEN_VOID);
+            case str_hash("opt"): return make_token(TOKEN_OPT);
         }
         return make_token(TOKEN_IDENT);
     }

@@ -20,12 +20,14 @@ namespace quark{
             case TOKEN_ELSE: return "ELSE";
             case TOKEN_WHILE: return "WHILE";
             case TOKEN_RETURN: return "RETURN";
-            case TOKEN_FN: return "FN";
+            case TOKEN_FUNC: return "FUNC";
+            case TOKEN_VAR: return "VAR";
 
             // types
             case TOKEN_VOID: return "VOID";
             case TOKEN_INT: return "INT";
             case TOKEN_FLOAT: return "FLOAT";
+            case TOKEN_OPT: return "OPT";
 
             // operators
             case TOKEN_PLUS: return "+";
@@ -33,6 +35,7 @@ namespace quark{
             case TOKEN_STAR: return "*";
             case TOKEN_SLASH: return "/";
             case TOKEN_NOT: return "!";
+            case TOKEN_COLON: return ":";
 
             case TOKEN_EQ: return "=";
             case TOKEN_EQEQ: return "==";
@@ -42,6 +45,7 @@ namespace quark{
             case TOKEN_LTE: return "<=";
             case TOKEN_GT: return ">";
             case TOKEN_GTE: return ">=";
+            case TOKEN_CEQ: return ":=";
 
             // delimiters
             case TOKEN_LPAREN: return "(";
@@ -54,6 +58,29 @@ namespace quark{
             case TOKEN_SEMICOLON: return ";";
 
             default: return "UNKNOWN";
+        }
+    }
+    bool is_operator(TokenType type){
+        switch(type){
+            case TOKEN_PLUS:     
+            case TOKEN_MINUS:     
+            case TOKEN_STAR:      
+            case TOKEN_SLASH:     
+            case TOKEN_NOT:        
+            case TOKEN_COLON:
+                return true;
+            default:
+                return false;      
+        }
+    }
+    bool is_type(TokenType type){
+        switch(type){
+            case TOKEN_VOID:
+            case TOKEN_INT:
+            case TOKEN_FLOAT:
+                return true;
+            default:
+                false;
         }
     }
 }

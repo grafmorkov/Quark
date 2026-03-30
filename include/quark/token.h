@@ -21,12 +21,14 @@ namespace quark{
         TOKEN_ELSE,
         TOKEN_WHILE,
         TOKEN_RETURN,
-        TOKEN_FN,
+        TOKEN_FUNC,
+        TOKEN_VAR,
 
         // types
         TOKEN_VOID,
         TOKEN_INT,
         TOKEN_FLOAT,
+        TOKEN_OPT,
 
         // operators
         TOKEN_PLUS,      // +
@@ -34,6 +36,7 @@ namespace quark{
         TOKEN_STAR,      // *
         TOKEN_SLASH,     // /
         TOKEN_NOT,        // !
+        TOKEN_COLON,      // :
         
         TOKEN_EQ,        // =
         TOKEN_EQEQ,      // ==
@@ -43,6 +46,7 @@ namespace quark{
         TOKEN_LTE,       // <=
         TOKEN_GT,        // >
         TOKEN_GTE,       // >=
+        TOKEN_CEQ,       // :=
 
         // delimiters
         TOKEN_LPAREN,    // (
@@ -54,7 +58,8 @@ namespace quark{
         TOKEN_COMMA,     // ,
         TOKEN_SEMICOLON // ;
     };
-    
+    bool is_operator(TokenType type);
+    bool is_type(TokenType type);
 
     struct Token {
         TokenType type;

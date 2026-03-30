@@ -2,8 +2,6 @@
 
 **Quark** is a minimalist compiled programming language, currently in the early stages of development.
 
-Right now, it only supports **lexical analysis**. In future updates, I plan to add **parsing** and **AST (Abstract Syntax Tree)** generation.
-
 ---
 
 ## Getting Started
@@ -36,7 +34,15 @@ You can run the compiler on a `.qk` file like this:
 ./quark path/to/file.qk
 ```
 
-> **Note:** At this point, Quark only **tokenizes the input**. Syntax checking and AST support will be added in upcoming versions.
+## Tasks
+
+| Stage               | Status        | Description |
+|--------------------|--------------|------------|
+| Lexical Analysis    | ✅ Completed | Tokenization of input source code |
+| Syntax Analysis     | ✅ Completed | AST construction via parsing |
+| Semantic Analysis   | 📝 Planned | Type checking and scope resolution |
+| Optimization        | 📝 Planned | Intermediate code optimization |
+| Code Generation     | 📝 Planned | Target code emission |
 
 ---
 ## The Demo version of the syntax:
@@ -45,18 +51,9 @@ You can run the compiler on a `.qk` file like this:
 /*
     Another comments
 */
-fn main(int y) void {
-    int x = 1; // variables
-
-    if(x <= 1){ // if
-        x = y;
-    }
-    else{
-        x = 5;
-    }
-    while(x < 50){ // while
-        x = x + 2;
-    }
+func main() void {
+    var x: opt int; // can be none(null)
+    var y: int; // basic variable, cannot be none(null)
 }    
 ```
 

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "quark/token.h"
+#include "quark/ast.h"
 #include "quark/lexer.h"
 
 namespace quark::ps {
@@ -14,37 +15,24 @@ namespace quark::ps {
         Token previous;
 
         Token advance();
-        Token peek();
         bool check(TokenType type);
         bool match(TokenType type);
         Token expect(TokenType type, const char* msg);
 
-        /* expr → equality
-        equality → comparison (('==' | '!=') comparison)*
-        comparison → term (('<' | '>' | '<=' | '>=') term)*
-        term → factor (('+' | '-') factor)*
-        factor → unary (('*' | '/') unary)*
-        unary → ('!' | '-') unary | primary
-        primary → NUMBER | STRING | IDENT | '(' expr ')' */
-
-        void parse_expr();
-        void parse_equality();
-        void parse_comparison();
-        void parse_term();
-        void parse_factor();
-        void parse_unary();
-        void parse_primary();
-        void parse_assigment();
+        ast::Expr parse_expr();
+        ast::Expr parse_assigment();
 
         // Statements
-        void parse_statement();
-        void parse_var();
+        ast::Stmt parse_statement();
+        ast::VarDecl parse_var();
+        void parse_type(ast::VarDecl* var);
+
         void parse_return();
         void parse_if();
-        void parse_fn();
-        void parse_fn_args();
+        void parse_func();
+        void parse_func_args();
         void parse_while();
-        void parse_block();
+        ast::BlockExpr parse_block();
 
     public:
         Parser(lx::Lexer& lex);
