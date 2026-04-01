@@ -47,9 +47,9 @@ You can run the compiler on a `.qk` file like this:
 ---
 ## The Demo version of the syntax:
 ```qk
-// Comments
+// This is a comment
 /*
-    Another comments
+    This is another comment
 */
 func main() void {
     var x: opt int; // can be none(null)

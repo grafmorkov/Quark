@@ -39,7 +39,10 @@ namespace quark::ast {
     struct VarExpr {
         std::string name;
     };
-
+    struct AssignExpr {
+        Expr* target;
+        Expr* value;
+    };
     struct SomeExpr {
         Expr* value;
     };
@@ -82,11 +85,13 @@ namespace quark::ast {
         SomeExpr,
         NoneExpr,
         MatchExpr,
+        AssignExpr,
         BlockExpr
     >;
 
     struct Expr {
         ExprKind kind;
+        Type* inferred_type = nullptr;
     };
 
     struct VarDecl {

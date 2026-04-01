@@ -256,13 +256,21 @@ namespace quark::ps {
         };
 
         parse_assignment = [&]() -> ast::Expr {
-            ast::Expr expr = parse_primary();
+            ast::Expr left = parse_primary();
 
             if (match(TOKEN_EQ)) {
-                parse_assignment();
+                ast::Expr right = parse_assignment();
+
+                ast::AssignExpr assign;
+                assign.target = new ast::Expr(left);
+                assign.value  = new ast::Expr(right);
+
+                ast::Expr ret;
+                ret.kind = assign;
+                return ret;
             }
 
-            return expr;
+            return left;
         };
 
         return parse_assignment();
