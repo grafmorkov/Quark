@@ -12,6 +12,8 @@ add_library(libquark
     core/lexer.cpp
     core/parser.cpp
     core/token.cpp
+    core/semantic.cpp
+    core/symbol_table.cpp
 )
 
 target_include_directories(libquark

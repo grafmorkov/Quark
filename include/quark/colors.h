@@ -1,6 +1,4 @@
-#ifndef QUARK_COLOR_H
-#define QUARK_COLOR_H
-
+#pragma once
 #include <iostream>
 
 namespace quark::colors {
@@ -51,5 +49,3 @@ constexpr const char* BRIGHT  = "1";
 #endif
 
 } // namespace quark::colors
-
-#endif // QUARK_COLOR_H
