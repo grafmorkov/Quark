@@ -1,9 +1,10 @@
-#ifndef QUARK_AST_H
-#define QUARK_AST_H
+#pragma once
 
 #include <variant>
 #include <vector>
 #include <string>
+#include <memory>
+#include <optional>
 
 namespace quark::ast {
 
@@ -11,21 +12,13 @@ namespace quark::ast {
     struct Stmt;
     struct Type;
 
-    struct IntType {};
-    struct StringType {};
-
-    struct OptionalType {
-        Type* inner;
-    };
-
-    using TypeKind = std::variant<
-        IntType,
-        StringType,
-        OptionalType
-    >;
-
     struct Type {
-        TypeKind kind;
+        enum Kind{
+            Int,
+            String,
+            Optional
+        } kind;
+        const Type* inner = nullptr; // for optional
     };
 
     struct IntLit {
@@ -34,17 +27,17 @@ namespace quark::ast {
 
     struct StringLit {
         std::string value;
-    };
+    }; 
 
     struct VarExpr {
         std::string name;
     };
     struct AssignExpr {
-        Expr* target;
-        Expr* value;
+        std::unique_ptr<Expr> target;
+        std::unique_ptr<Expr> value;
     };
     struct SomeExpr {
-        Expr* value;
+        std::unique_ptr<Expr> value;
     };
 
     struct NoneExpr {};
@@ -58,7 +51,7 @@ namespace quark::ast {
         } 
     */
     struct MatchExpr {
-        Expr* value;
+        std::unique_ptr<Expr> value;
 
         enum class PatternKind {
             Some,
@@ -67,15 +60,15 @@ namespace quark::ast {
 
         struct Case {
             PatternKind pattern;
-            std::string bindName;
-            Expr* body;
+            std::optional<std::string> bindName;
+            std::unique_ptr<Expr> body;
         };
 
         std::vector<Case> cases;
     };
 
     struct BlockExpr {
-        std::vector<Stmt*> statements;
+        std::vector<std::unique_ptr<Stmt>> statements;
     };
 
     using ExprKind = std::variant<
@@ -91,21 +84,38 @@ namespace quark::ast {
 
     struct Expr {
         ExprKind kind;
-        Type* inferred_type = nullptr;
+        std::unique_ptr<Type> inferred_type = nullptr;
     };
 
     struct VarDecl {
         std::string name;
-        Type* type;
-        Expr* value;
+        const Type* type;
+        std::unique_ptr<Expr> value;
     };
 
     struct ExprStmt {
-        Expr* expr;
+        std::unique_ptr<Expr> expr;
     };
+    // TODO: If, While, Return
+    // struct IfStmt {
+    //     std::unique_ptr<Expr> condition;
+    //     std::unique_ptr<Stmt> thenBranch;
+    //     std::unique_ptr<Stmt> elseBranch; 
+    // };
 
+    // struct WhileStmt {
+    //     std::unique_ptr<Expr> condition;
+    //     std::unique_ptr<Stmt> body;
+    // };
+
+    // struct ReturnStmt {
+    //     std::unique_ptr<Expr> value;
+    // };
     using StmtKind = std::variant<
         VarDecl,
+        // IfStmt,
+        // WhileStmt,
+        // ReturnStmt,
         ExprStmt
     >;
 
@@ -114,5 +124,3 @@ namespace quark::ast {
     };
 
 }
-
-#endif
