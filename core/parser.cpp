@@ -8,7 +8,13 @@ namespace quark::ps {
 
     namespace {
         bool is_type_token(TokenType type) {
-            return type == TOKEN_INT || type == TOKEN_STRING;
+            switch(type){
+                case TOKEN_INT:
+                case TOKEN_VOID:
+                case TOKEN_STRING:
+                    return true;
+            }
+            return false;
         }
 
         ast::Expr make_none_expr() {
@@ -86,10 +92,10 @@ namespace quark::ps {
 
     ast::Stmt Parser::parse_statement() { // TODO: If,Func,While etc.
         if (match(TOKEN_VAR))    { return ast::Stmt{ parse_var() }; }
-        if (match(TOKEN_RETURN)) { parse_return(); return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(make_none_expr()) } }; }
-        if (match(TOKEN_IF))     { parse_if(); return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(make_none_expr()) } }; }
-        if (match(TOKEN_FUNC))   { parse_func(); return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(make_none_expr()) } }; }
-        if (match(TOKEN_WHILE))  { parse_while(); return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(make_none_expr()) } }; }
+        if (match(TOKEN_RETURN)) { return ast::Stmt{ parse_return() }; }
+        if (match(TOKEN_IF))     { return ast::Stmt{ parse_if() }; }
+        if (match(TOKEN_FUNC))   { return ast::Stmt{ parse_func()} ; }
+        if (match(TOKEN_WHILE))  { return ast::Stmt{ parse_while() }; }
 
         ast::Expr expr = parse_expr();
         expect(TOKEN_SEMICOLON, "Expected ';' after expression");
@@ -102,7 +108,7 @@ namespace quark::ps {
 
         ret.name = expect(TOKEN_IDENT, "Expected variable name after the type name").text;
         expect(TOKEN_COLON, "Expected ':' after variable name");
-        parse_type(&ret);
+        ret.type = parse_type();
         expect(TOKEN_EQ, "Expected '=' after variable type");
         ret.value = std::make_unique<ast::Expr>(parse_expr());
         expect(TOKEN_SEMICOLON, "Expected ';'");
@@ -110,71 +116,60 @@ namespace quark::ps {
         return ret;
     }
 
-    void Parser::parse_type(ast::VarDecl* var) {
-        if (!var) return;
-
+    const ast::Type* Parser::parse_type() {
         if (match(TOKEN_OPT)) {
+            const Type* inner = parse_type();
+            return ctx.types.get_optional(inner);
+        }
 
-            if (!is_type_token(current.type)) {
-                logger::log_error("Unexpected type after optional",
-                    " got: ", current.text,
-                    " at ", current.line, ":", current.column);
-
-                var->type = ctx.types.get_optional(ctx.types.get_int());
-                return;
-            }
-
-            TokenType t = advance().type;
-            const Type* inner = get_type_from_token(t);
-
-            var->type = ctx.types.get_optional(inner);
-            return;
+        if (check(TOKEN_VOID)) {
+            advance();
+            return ctx.types.get_void();
         }
 
         if (!is_type_token(current.type)) {
-            logger::log_error("Expected type",
-                " got: ", current.text,
-                " at ", current.line, ":", current.column);
-
-            var->type = ctx.types.get_int();
-            return;
+            logger::log_error("Expected type");
+            return ctx.types.get_int();
         }
 
-        TokenType t = advance().type;
-        var->type = get_type_from_token(t);
-
-        if (is_type_token(current.type)) {
-            logger::log_error("Unexpected another type at ",
-                current.line, ":", current.column);
-        }
+        return get_type_from_token(advance().type);
     }
-    void Parser::parse_return() {
-        if (!check(TOKEN_SEMICOLON)) parse_expr();
+    ast::ReturnStmt Parser::parse_return() {
+        ast::ReturnStmt ret;
+        if (!check(TOKEN_SEMICOLON)) ret.value = std::make_unique<ast::Expr>(parse_expr());
         expect(TOKEN_SEMICOLON, "Expected ';' after return");
+        return ret;
     }
 
-    void Parser::parse_if() {
+    ast::IfStmt Parser::parse_if() {
+        ast::IfStmt ret;
         expect(TOKEN_LPAREN, "Expected '(' after 'if'");
-        parse_expr();
+        ret.condition = std::make_unique<ast::Expr>(parse_expr());
         expect(TOKEN_RPAREN, "Expected ')'");
-        parse_block();
-        if (match(TOKEN_ELSE)) parse_block();
+        ret.thenBranch = std::make_unique<BlockExpr>(parse_block());
+        if (match(TOKEN_ELSE)) ret.elseBranch = std::make_unique<BlockExpr>(parse_block());
+        return ret;
     }
 
-    void Parser::parse_func(){
+    ast::FuncStmt Parser::parse_func(){
+        ast::FuncStmt ret;
         expect(TOKEN_IDENT, "Expected function name");
         expect(TOKEN_LPAREN, "Expected '(' after the name of the function");
-        parse_func_args();
+        ret.args = parse_func_args();
         expect(TOKEN_RPAREN, "Expected ')'");
-        expect(TOKEN_VOID, "Expected the return type");
-        parse_block();
+        ret.return_t = parse_type();
+        ret.body = std::make_unique<ast::BlockExpr>(parse_block());
+        return ret;
     }
 
-    void Parser::parse_while() {
+
+    ast::WhileStmt Parser::parse_while() {
+        ast::WhileStmt ret;
         expect(TOKEN_LPAREN, "Expected '(' after 'while'");
-        parse_expr();
+        ret.condition = std::make_unique<ast::Expr>(parse_expr());
         expect(TOKEN_RPAREN, "Expected ')'");
-        parse_block();
+        ret.body = std::make_unique<BlockExpr>(parse_block());
+        return ret;
     }
 
     ast::BlockExpr Parser::parse_block() {
@@ -188,29 +183,34 @@ namespace quark::ps {
         expect(TOKEN_RBRACE, "Expected '}'");
         return ret;
     }
+    std::vector<ast::FuncArg> Parser::parse_func_args() {
+        std::vector<ast::FuncArg> ret;
 
-    void Parser::parse_func_args() {
-        if (check(TOKEN_RPAREN)) return;
+        if (check(TOKEN_RPAREN)) return ret;
 
         while (true) {
             if (!is_type_token(current.type)) {
-                logger::log_error("Expected argument type, got: ", current.text,
-                                " at ", current.line, ":", current.column);
+                logger::log_error("Expected argument type...");
                 advance();
                 if (check(TOKEN_RPAREN)) break;
-            } else {
-                advance();
+                continue;
             }
 
-            expect(TOKEN_IDENT, "Expected argument name after type");
+            TokenType t = advance().type;
+            const Type* type = get_type_from_token(t);
+
+            auto name = std::string(expect(TOKEN_IDENT, "Expected arg name").text);
+
+            ret.push_back({ name, type });
 
             if (match(TOKEN_COMMA)) continue;
             if (check(TOKEN_RPAREN)) break;
 
-            logger::log_error("Expected ',' or ')' after function argument, got: ", current.text,
-                            " at ", current.line, ":", current.column);
+            logger::log_error("Expected ',' or ')'");
             advance();
         }
+
+        return ret;
     }
 
     ast::Expr Parser::parse_expr() {

@@ -16,6 +16,7 @@ namespace quark::ast {
         enum Kind{
             Int,
             String,
+            Void,
             Optional
         } kind;
         const Type* inner = nullptr; // for optional
@@ -96,26 +97,36 @@ namespace quark::ast {
     struct ExprStmt {
         std::unique_ptr<Expr> expr;
     };
-    // TODO: If, While, Return
-    // struct IfStmt {
-    //     std::unique_ptr<Expr> condition;
-    //     std::unique_ptr<Stmt> thenBranch;
-    //     std::unique_ptr<Stmt> elseBranch; 
-    // };
+    struct IfStmt {
+        std::unique_ptr<Expr> condition;
+        std::unique_ptr<BlockExpr> thenBranch;
+        std::unique_ptr<BlockExpr> elseBranch; 
+    };
 
-    // struct WhileStmt {
-    //     std::unique_ptr<Expr> condition;
-    //     std::unique_ptr<Stmt> body;
-    // };
+    struct WhileStmt {
+        std::unique_ptr<Expr> condition;
+        std::unique_ptr<BlockExpr> body;
+    };
+    
 
-    // struct ReturnStmt {
-    //     std::unique_ptr<Expr> value;
-    // };
+    struct ReturnStmt {
+        std::unique_ptr<Expr> value;
+    };
+    struct FuncArg {
+        std::string name;
+        const Type* type;
+    };
+    struct FuncStmt {
+        std::unique_ptr<BlockExpr> body;
+        std::vector<FuncArg> args;
+        const Type* return_t;
+    };
     using StmtKind = std::variant<
         VarDecl,
-        // IfStmt,
-        // WhileStmt,
-        // ReturnStmt,
+        IfStmt,
+        WhileStmt,
+        ReturnStmt,
+        FuncStmt,
         ExprStmt
     >;
 

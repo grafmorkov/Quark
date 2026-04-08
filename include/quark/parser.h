@@ -26,13 +26,15 @@ namespace quark::ps {
         // Statements
         ast::Stmt parse_statement();
         ast::VarDecl parse_var();
-        void parse_type(ast::VarDecl* var);
+        const ast::Type* Parser::parse_type();
 
-        void parse_return();
-        void parse_if();
-        void parse_func();
-        void parse_func_args();
-        void parse_while();
+        ast::ReturnStmt parse_return();
+        ast::IfStmt parse_if();
+
+        ast::FuncStmt parse_func();
+        std::vector<ast::FuncArg> Parser::parse_func_args();
+
+        ast::WhileStmt parse_while();
         ast::BlockExpr parse_block();
 
         // Compiler Context
