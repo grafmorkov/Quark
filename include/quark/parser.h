@@ -1,5 +1,4 @@
-#ifndef QUARK_PARSER_HPP
-#define QUARK_PARSER_HPP
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -7,6 +6,7 @@
 #include "quark/token.h"
 #include "quark/ast.h"
 #include "quark/lexer.h"
+#include "quark/compiler_context.h"
 
 namespace quark::ps {
     class Parser {
@@ -20,24 +20,29 @@ namespace quark::ps {
         Token expect(TokenType type, const char* msg);
 
         ast::Expr parse_expr();
-        ast::Expr parse_assigment();
+        ast::Expr parse_assignment();
+        ast::Expr Parser::parse_primary();
 
         // Statements
         ast::Stmt parse_statement();
         ast::VarDecl parse_var();
-        void parse_type(ast::VarDecl* var);
+        const ast::Type* Parser::parse_type();
 
-        void parse_return();
-        void parse_if();
-        void parse_func();
-        void parse_func_args();
-        void parse_while();
+        ast::ReturnStmt parse_return();
+        ast::IfStmt parse_if();
+
+        ast::FuncStmt parse_func();
+        std::vector<ast::FuncArg> Parser::parse_func_args();
+
+        ast::WhileStmt parse_while();
         ast::BlockExpr parse_block();
 
+        // Compiler Context
+        CompilerContext& ctx;
+        const ast::Type* Parser::get_type_from_token(TokenType t);
+
     public:
-        Parser(lx::Lexer& lex);
-        void parse();
+        Parser(lx::Lexer& lex, CompilerContext& ctx);
+        std::vector<std::unique_ptr<ast::Stmt>> Parser::parse();
     };
 }
-
-#endif
