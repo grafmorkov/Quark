@@ -1,4 +1,5 @@
-#pragma once
+#ifndef QUARK_LEXER_H
+#define QUARK_LEXER_H
 
 #include <iostream>
 #include <string>
@@ -53,3 +54,4 @@ namespace quark::lx{
         }
     };
 }
+#endif

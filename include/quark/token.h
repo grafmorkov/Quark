@@ -1,4 +1,6 @@
-#pragma once
+#ifndef QUARK_TOKEN_H
+#define QUARK_TOKEN_H
+
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -72,3 +74,4 @@ namespace quark{
     };
     std::string token_type_to_string(TokenType type);
 }
+#endif /// TOKEN

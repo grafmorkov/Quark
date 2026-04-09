@@ -1,4 +1,6 @@
-#pragma once
+#ifndef QUARK_LOGGER_H
+#define QUARK_LOGGER_H
+
 #include <iostream>
 #include <string_view>
 #include <cstdlib>
@@ -50,3 +52,5 @@ template<typename... Args>
 }
 
 } // namespace quark
+
+#endif // QUARK_LOGGER_H

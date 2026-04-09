@@ -1,6 +1,5 @@
 #include "quark/parser.h"
 #include "quark/logger.h"
-#include "quark/compiler_context.h"
 
 #include <functional>
 
@@ -9,6 +8,14 @@ namespace quark::ps {
     namespace {
         bool is_type_token(TokenType type) {
             return type == TOKEN_INT || type == TOKEN_STRING;
+        }
+
+        ast::TypeKind get_kind(TokenType type){
+            switch(type){
+                case TOKEN_INT:    return ast::IntType();
+                case TOKEN_STRING: return ast::StringType();
+                default:           return ast::IntType();
+            }
         }
 
         ast::Expr make_none_expr() {
@@ -35,31 +42,29 @@ namespace quark::ps {
             return ret;
         }
 
-        ast::Expr make_some_expr(ast::Expr&& value) {
+        ast::Expr make_some_expr(ast::Expr* value) {
             ast::Expr ret;
-            ret.kind = ast::SomeExpr{ std::make_unique<ast::Expr>(std::move(value)) };
+            ret.kind = ast::SomeExpr{ value };
             return ret;
         }
 
-        ast::Expr make_block_expr(ast::BlockExpr&& block){
+        ast::Expr make_block_expr(ast::BlockExpr block) {
             ast::Expr ret;
-            ret.kind = std::move(block);
+            ret.kind = block;
             return ret;
-        }       
+        }
     }
 
-    Parser::Parser(lx::Lexer& lex, CompilerContext& ctx_): lexer(lex), ctx(ctx_){
+    Parser::Parser(lx::Lexer& lex): lexer(lex){
         current = lexer.next_token();
     }
 
-    std::vector<std::unique_ptr<ast::Stmt>> Parser::parse() {
-        std::vector<std::unique_ptr<ast::Stmt>> ret;
-
-        while(!check(TOKEN_EOF)) {
-            ret.push_back(std::make_unique<ast::Stmt>(parse_statement()));
+    void Parser::parse() {
+        while (!check(TOKEN_EOF)) {
+            parse_statement();
         }
-        return ret;
     }
+
     Token Parser::advance() {
         previous = current;
         current = lexer.next_token();
@@ -84,16 +89,16 @@ namespace quark::ps {
         return advance();
     }
 
-    ast::Stmt Parser::parse_statement() { // TODO: If,Func,While etc.
+    ast::Stmt Parser::parse_statement() {
         if (match(TOKEN_VAR))    { return ast::Stmt{ parse_var() }; }
-        if (match(TOKEN_RETURN)) { parse_return(); return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(make_none_expr()) } }; }
-        if (match(TOKEN_IF))     { parse_if(); return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(make_none_expr()) } }; }
-        if (match(TOKEN_FUNC))   { parse_func(); return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(make_none_expr()) } }; }
-        if (match(TOKEN_WHILE))  { parse_while(); return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(make_none_expr()) } }; }
+        if (match(TOKEN_RETURN)) { parse_return(); return ast::Stmt{ ast::ExprStmt{ new ast::Expr(make_none_expr()) } }; }
+        if (match(TOKEN_IF))     { parse_if(); return ast::Stmt{ ast::ExprStmt{ new ast::Expr(make_none_expr()) } }; }
+        if (match(TOKEN_FUNC))   { parse_func(); return ast::Stmt{ ast::ExprStmt{ new ast::Expr(make_none_expr()) } }; }
+        if (match(TOKEN_WHILE))  { parse_while(); return ast::Stmt{ ast::ExprStmt{ new ast::Expr(make_none_expr()) } }; }
 
         ast::Expr expr = parse_expr();
         expect(TOKEN_SEMICOLON, "Expected ';' after expression");
-        return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(std::move(expr)) } };
+        return ast::Stmt{ ast::ExprStmt{ new ast::Expr(expr) } };
     }
 
     ast::VarDecl Parser::parse_var() {
@@ -104,50 +109,52 @@ namespace quark::ps {
         expect(TOKEN_COLON, "Expected ':' after variable name");
         parse_type(&ret);
         expect(TOKEN_EQ, "Expected '=' after variable type");
-        ret.value = std::make_unique<ast::Expr>(parse_expr());
+        ret.value = new ast::Expr(parse_expr());
         expect(TOKEN_SEMICOLON, "Expected ';'");
 
         return ret;
     }
 
-    void Parser::parse_type(ast::VarDecl* var) {
+    void Parser::parse_type(ast::VarDecl* var){
         if (!var) return;
 
+        var->type = new ast::Type{};
+
         if (match(TOKEN_OPT)) {
+            ast::Type* inner = new ast::Type{};
 
-            if (!is_type_token(current.type)) {
-                logger::log_error("Unexpected type after optional",
-                    " got: ", current.text,
-                    " at ", current.line, ":", current.column);
-
-                var->type = ctx.types.get_optional(ctx.types.get_int());
-                return;
+            if (!is_type_token(current.type) || check(TOKEN_OPT)) {
+                logger::log_error("Unexpected type after the optional type", " got: ", current.text,
+                            " at ", current.line, ":", current.column);
+                inner->kind = ast::IntType{};
+            } else {
+                TokenType t = advance().type;
+                inner->kind = get_kind(t);
             }
 
-            TokenType t = advance().type;
-            const Type* inner = get_type_from_token(t);
-
-            var->type = ctx.types.get_optional(inner);
+            ast::OptionalType opt;
+            opt.inner = inner;
+            var->type->kind = opt;
             return;
         }
 
-        if (!is_type_token(current.type)) {
-            logger::log_error("Expected type",
-                " got: ", current.text,
-                " at ", current.line, ":", current.column);
-
-            var->type = ctx.types.get_int();
+        if(!is_type_token(current.type)){
+            logger::log_error("Expected type", " got: ", current.text,
+                        " at ", current.line, ":", current.column);
+            var->type->kind = ast::IntType{};
             return;
         }
-
-        TokenType t = advance().type;
-        var->type = get_type_from_token(t);
 
         if (is_type_token(current.type)) {
-            logger::log_error("Unexpected another type at ",
-                current.line, ":", current.column);
+            TokenType t = advance().type;
+            var->type->kind = get_kind(t);
+        }
+
+        if (is_type_token(current.type)) {
+            logger::log_error("Unexpected another type after at ", current.line, ":", current.column);
         }
     }
+
     void Parser::parse_return() {
         if (!check(TOKEN_SEMICOLON)) parse_expr();
         expect(TOKEN_SEMICOLON, "Expected ';' after return");
@@ -182,7 +189,8 @@ namespace quark::ps {
         expect(TOKEN_LBRACE, "Expected '{'");
 
         while (!check(TOKEN_RBRACE) && !check(TOKEN_EOF)) {
-            ret.statements.push_back(std::make_unique<ast::Stmt>(parse_statement()));
+            ast::Stmt stmt = parse_statement();
+            ret.statements.push_back(new ast::Stmt(stmt));
         }
 
         expect(TOKEN_RBRACE, "Expected '}'");
@@ -193,7 +201,7 @@ namespace quark::ps {
         if (check(TOKEN_RPAREN)) return;
 
         while (true) {
-            if (!is_type_token(current.type)) {
+            if (!is_type_token(current.type) && !check(TOKEN_FLOAT)) {
                 logger::log_error("Expected argument type, got: ", current.text,
                                 " at ", current.line, ":", current.column);
                 advance();
@@ -214,25 +222,14 @@ namespace quark::ps {
     }
 
     ast::Expr Parser::parse_expr() {
-        return parse_assignment();
+        return parse_assigment();
     }
 
-    ast::Expr Parser::parse_assignment() {
-        ast::Expr left = parse_primary();
+    ast::Expr Parser::parse_assigment() {
+        std::function<ast::Expr()> parse_assignment;
+        std::function<ast::Expr()> parse_primary;
 
-            if (match(TOKEN_EQ)) {
-                ast::Expr right = parse_assignment();
-                ast::Expr ret;
-                ret.kind = ast::AssignExpr{
-                    std::make_unique<ast::Expr>(std::move(left)),
-                    std::make_unique<ast::Expr>(std::move(right))
-                };
-                return ret;
-            }
-
-            return left;
-    }
-    ast::Expr Parser::parse_primary(){
+        parse_primary = [&]() -> ast::Expr {
             if (match(TOKEN_NUMBER)) {
                 return make_int_expr(static_cast<int>(previous.number));
             }
@@ -255,16 +252,28 @@ namespace quark::ps {
 
             logger::log_error("Unexpected token: ", current.text);
             advance();
-            return make_none_expr();      
-    }
-    const ast::Type* Parser::get_type_from_token(TokenType t) {
-            switch (t) {
-                case TOKEN_INT:    return ctx.types.get_int();
-                case TOKEN_STRING: return ctx.types.get_string();
-                default:           
-                        logger::log_error("Unknown type token");
-                        return ctx.types.get_int();
+            return make_none_expr();
+        };
+
+        parse_assignment = [&]() -> ast::Expr {
+            ast::Expr left = parse_primary();
+
+            if (match(TOKEN_EQ)) {
+                ast::Expr right = parse_assignment();
+
+                ast::AssignExpr assign;
+                assign.target = new ast::Expr(left);
+                assign.value  = new ast::Expr(right);
+
+                ast::Expr ret;
+                ret.kind = assign;
+                return ret;
             }
+
+            return left;
+        };
+
+        return parse_assignment();
     }
 
 }
