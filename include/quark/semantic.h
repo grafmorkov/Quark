@@ -20,5 +20,7 @@ namespace quark::sm{
             void analyze_stmt(const ast::Stmt* stmt);
 
             bool is_lvalue(ast::Expr* expr);
+
+            const ast::Type* current_function_return_type = nullptr;
         };
 }

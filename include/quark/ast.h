@@ -117,6 +117,7 @@ namespace quark::ast {
         const Type* type;
     };
     struct FuncStmt {
+        std::string name;
         std::unique_ptr<BlockExpr> body;
         std::vector<FuncArg> args;
         const Type* return_t;
