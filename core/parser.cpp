@@ -45,13 +45,7 @@ namespace quark::ps {
             ast::Expr ret;
             ret.kind = ast::SomeExpr{ std::make_unique<ast::Expr>(std::move(value)) };
             return ret;
-        }
-
-        ast::Expr make_block_expr(ast::BlockExpr&& block){
-            ast::Expr ret;
-            ret.kind = std::move(block);
-            return ret;
-        }       
+        }      
     }
 
     Parser::Parser(lx::Lexer& lex, CompilerContext& ctx_): lexer(lex), ctx(ctx_){
@@ -143,11 +137,17 @@ namespace quark::ps {
 
     ast::IfStmt Parser::parse_if() {
         ast::IfStmt ret;
+
         expect(TOKEN_LPAREN, "Expected '(' after 'if'");
         ret.condition = std::make_unique<ast::Expr>(parse_expr());
         expect(TOKEN_RPAREN, "Expected ')'");
-        ret.thenBranch = std::make_unique<BlockExpr>(parse_block());
-        if (match(TOKEN_ELSE)) ret.elseBranch = std::make_unique<BlockExpr>(parse_block());
+
+        ret.thenBranch = std::make_unique<ast::BlockExpr>(parse_block());
+
+        if (match(TOKEN_ELSE)) {
+            ret.elseBranch = std::make_unique<ast::BlockExpr>(parse_block());
+        }
+
         return ret;
     }
 
@@ -168,20 +168,24 @@ namespace quark::ps {
         expect(TOKEN_LPAREN, "Expected '(' after 'while'");
         ret.condition = std::make_unique<ast::Expr>(parse_expr());
         expect(TOKEN_RPAREN, "Expected ')'");
-        ret.body = std::make_unique<BlockExpr>(parse_block());
+        ret.body = std::make_unique<ast::BlockExpr>(parse_block());
         return ret;
     }
 
     ast::BlockExpr Parser::parse_block() {
-        ast::BlockExpr ret;
         expect(TOKEN_LBRACE, "Expected '{'");
 
+        ast::BlockExpr block;
+
         while (!check(TOKEN_RBRACE) && !check(TOKEN_EOF)) {
-            ret.statements.push_back(std::make_unique<ast::Stmt>(parse_statement()));
+            block.statements.push_back(
+                std::make_unique<ast::Stmt>(parse_statement())
+            );
         }
 
         expect(TOKEN_RBRACE, "Expected '}'");
-        return ret;
+
+        return block;
     }
     std::vector<ast::FuncArg> Parser::parse_func_args() {
         std::vector<ast::FuncArg> ret;
