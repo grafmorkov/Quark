@@ -16,11 +16,27 @@ namespace quark::sm{
         private:
             CompilerContext& ctx;
 
-            const ast::Type* SemanticAnalyzer::analyze_expr(const ast::Expr* expr);
+            const ast::Type* analyze_expr(const ast::Expr* expr);
             void analyze_stmt(const ast::Stmt* stmt);
 
             bool is_lvalue(ast::Expr* expr);
 
             const ast::Type* current_function_return_type = nullptr;
+
+            void analyze_stmt_node(const ast::VarDecl& var);
+            void analyze_stmt_node(const ast::ExprStmt& expr);
+            void analyze_stmt_node(const ast::ReturnStmt& ret);
+            void analyze_stmt_node(const ast::FuncStmt& func);
+            void analyze_stmt_node(const ast::IfStmt& stmt);
+            void analyze_stmt_node(const ast::WhileStmt& stmt);
+            
+            const ast::Type* analyze_expr_node(const ast::IntLit&);
+            const ast::Type* analyze_expr_node(const ast::StringLit&);
+            const ast::Type* analyze_expr_node(const ast::VarExpr& var);
+            const ast::Type* analyze_expr_node(const ast::AssignExpr& asg);
+            const ast::Type* analyze_expr_node(const ast::SomeExpr& some);
+            const ast::Type* analyze_expr_node(const ast::NoneExpr&);
+            const ast::Type* analyze_expr_node(const ast::BlockExpr& block);
+            const ast::Type* analyze_expr_node(const ast::MatchExpr& m);
         };
 }
