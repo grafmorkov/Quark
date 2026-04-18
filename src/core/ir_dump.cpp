@@ -8,6 +8,7 @@ namespace quark::codegen{
         switch (op) {
             case IRBinaryOp::Add: return "add";
             case IRBinaryOp::Mul: return "mul";
+            case IRBinaryOp::Sub: return "sub";
             case IRBinaryOp::Div: return "div";
         }
         return "unknown";

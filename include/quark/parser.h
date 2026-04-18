@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <queue>
 
 #include "quark/token.h"
 #include "quark/ast.h"
@@ -9,42 +10,60 @@
 #include "quark/compiler_context.h"
 
 namespace quark::ps {
+
     class Parser {
-        lx::Lexer& lexer;
-        Token current;
-        Token previous;
+        public:
+            Parser(lx::Lexer& lex, CompilerContext& ctx);
 
-        Token advance();
-        bool check(TokenType type);
-        bool match(TokenType type);
-        Token expect(TokenType type, const char* msg);
+            std::vector<std::unique_ptr<ast::Stmt>> parse();
 
-        ast::Expr parse_expr();
-        ast::Expr parse_assignment();
-        ast::Expr parse_primary();
-        ast::Expr parse_additive();
-        ast::Expr parse_multiplicative();
+        private:
+            lx::Lexer& lexer;
+            CompilerContext& ctx;
 
-        // Statements
-        ast::Stmt parse_statement();
-        ast::VarDecl parse_var();
-        const ast::Type* parse_type();
+            Token current;
+            Token previous;
 
-        ast::ReturnStmt parse_return();
-        ast::IfStmt parse_if();
+            std::deque<Token> buffer;
 
-        ast::FuncStmt parse_func();
-        std::vector<ast::FuncArg> parse_func_args();
+        private:
+            // core token control
+            Token advance();
+            bool check(TokenType type);
+            bool match(TokenType type);
+            Token expect(TokenType type, const char* msg);
+            Token peek(int offset);
 
-        ast::WhileStmt parse_while();
-        ast::BlockExpr parse_block();
+            // statements
+            ast::Stmt parse_statement();
+            ast::VarDecl parse_var();
+            ast::VarDecl parse_var_after_name(Token name);
+            ast::BlockExpr parse_block();
+            ast::IfStmt parse_if();
+            ast::WhileStmt parse_while();
+            ast::ReturnStmt parse_return();
+            ast::FuncStmt parse_func();
+            std::vector<ast::FuncArg> parse_func_args();
 
-        // Compiler Context
-        CompilerContext& ctx;
-        const ast::Type* get_type_from_token(Token t);
+            // expressions (Pratt)
+            ast::Expr parse_expr(int precedence = 0);
+            ast::Expr parse_prefix();
+            ast::Expr parse_postfix(ast::Expr left);
 
-    public:
-        Parser(lx::Lexer& lex, CompilerContext& ctx);
-        std::vector<std::unique_ptr<ast::Stmt>> Parser::parse();
+            // helpers
+            ast::Expr make_binary(ast::Expr left, ast::Expr right, TokenType op);
+            const ast::Type* parse_type();
+            const ast::Type* get_type_from_token(Token t);
+        };
+
+    enum class Precedence {
+        Lowest = 0,
+        Assignment = 1,
+        NullCoalesce = 2,
+        Equality = 3,
+        Additive = 4,
+        Multiplicative = 5,
+        Prefix = 6,
+        Call = 7
     };
 }

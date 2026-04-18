@@ -238,6 +238,10 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::OptionalBindExpr
 
     return t->inner;
 }
+const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::CallExpr& call) {
+    return nullptr;
+    //TODO
+}
 
 // Block
 

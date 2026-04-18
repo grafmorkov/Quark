@@ -17,6 +17,7 @@ struct IRValue {
 
 enum class IRBinaryOp {
     Add,
+    Sub,
     Mul,
     Div,
 };

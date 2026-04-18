@@ -82,8 +82,15 @@ void IRBuilder::create_jump(IRBlock* target) {
 
 // IRGenerator 
 void IRGenerator::gen_program(const std::vector<std::unique_ptr<Stmt>>& program) {
+    auto* entry = builder.create_block("entry");
+    builder.set_insert_point(entry);
+    
     for (const auto& stmt : program) {
-        gen_stmt(*stmt);
+        if (std::holds_alternative<FuncStmt>(stmt->kind)) {
+            gen_function(std::get<FuncStmt>(stmt->kind));
+        } else {
+            gen_stmt(*stmt);
+        }
     }
 }
 
@@ -102,9 +109,11 @@ void IRGenerator::gen_stmt(const Stmt& stmt) {
 void IRGenerator::gen_function(const FuncStmt& func) {
     auto* entry = builder.create_block(func.name);
     builder.set_insert_point(entry);
-
+    
     for (auto& stmt : func.body->statements)
         gen_stmt(*stmt);
+    
+    builder.create_return(builder.create_const(0));
 }
 
 // EXPRESSIONS
@@ -150,10 +159,7 @@ void IRGenerator::gen_stmt_node(const ExprStmt& node) {
 }
 
 void IRGenerator::gen_stmt_node(const VarDecl& node) {
-    IRValue value = node.value
-        ? gen_expr(*node.value)
-        : builder.create_const(0);
-
+    IRValue value = node.value ? gen_expr(*node.value) : builder.create_const(0);
     builder.create_store(IRValue{ node.name }, value);
 }
 
@@ -185,17 +191,35 @@ void IRGenerator::gen_stmt_node(const IfStmt& node) {
 
     builder.set_insert_point(end_block);
 }
+void IRGenerator::gen_stmt_node(const WhileStmt& node) {
+    auto* cond_block = builder.create_block("while_cond");
+    auto* body_block = builder.create_block("while_body");
+    auto* end_block  = builder.create_block("while_end");
+    
+    builder.create_jump(cond_block);
+    
+    builder.set_insert_point(cond_block);
+    auto cond = gen_expr(*node.condition);
+    builder.create_branch(cond, body_block, end_block);
+    
+    builder.set_insert_point(body_block);
+    for (auto& s : node.body->statements)
+        gen_stmt(*s);
+    builder.create_jump(cond_block);
+    
+    builder.set_insert_point(end_block);
+}
 
 // OPS 
 
 IRBinaryOp IRGenerator::map_op(BinaryOp op) {
     switch (op) {
         case BinaryOp::Add: return IRBinaryOp::Add;
-        case BinaryOp::Sub: return IRBinaryOp::Add; // TODO
+        case BinaryOp::Sub: return IRBinaryOp::Sub;
         case BinaryOp::Mul: return IRBinaryOp::Mul;
         case BinaryOp::Div: return IRBinaryOp::Div;
+        default: throw std::runtime_error("Unsupported binary op");
     }
-    throw std::runtime_error("Unsupported binary op");
 }
 
-} // namespace quark::codegen
+}
