@@ -3,6 +3,8 @@
 #include <string>
 #include <string_view>
 
+#include "utils/logger.h"
+
 namespace quark{
     enum TokenType {
         // special
@@ -39,6 +41,7 @@ namespace quark{
         TOKEN_EQ,        // =
         TOKEN_EQEQ,      // ==
         TOKEN_NEQ,       // !=
+        TOKEN_EQA,       // =>
 
         TOKEN_LT,        // <
         TOKEN_LTE,       // <=
@@ -67,8 +70,7 @@ namespace quark{
             double number; // TOKEN_NUMBER
         };
 
-        int line;
-        int column;
+        SourceLocation loc;
     };
     std::string token_type_to_string(TokenType type);
 }

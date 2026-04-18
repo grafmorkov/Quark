@@ -1,5 +1,4 @@
 #include "quark/symbol_table.h"
-#include "quark/logger.h"
 
 namespace quark::symb_t {
 

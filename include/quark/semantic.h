@@ -34,9 +34,12 @@ namespace quark::sm{
             const ast::Type* analyze_expr_node(const ast::StringLit&);
             const ast::Type* analyze_expr_node(const ast::VarExpr& var);
             const ast::Type* analyze_expr_node(const ast::AssignExpr& asg);
-            const ast::Type* analyze_expr_node(const ast::SomeExpr& some);
             const ast::Type* analyze_expr_node(const ast::NoneExpr&);
             const ast::Type* analyze_expr_node(const ast::BlockExpr& block);
-            const ast::Type* analyze_expr_node(const ast::MatchExpr& m);
+            const ast::Type* analyze_expr_node(const ast::NullCoalesceExpr& m);
+            const ast::Type* analyze_expr_node(const ast::BinaryExpr& b);
+            const ast::Type* analyze_expr_node(const ast::OptionalBindExpr& optb);
+            
+            const ast::Type* analyze_block(const ast::BlockExpr* block);
         };
 }

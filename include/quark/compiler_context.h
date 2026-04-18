@@ -8,5 +8,6 @@ namespace quark{
         public:
             types::TypeContext types;
             symb_t::SymbolTable symbols;
+            SourceLocation srcloc;
     };
 }
