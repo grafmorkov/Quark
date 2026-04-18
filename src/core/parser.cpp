@@ -1,8 +1,9 @@
 #include "quark/parser.h"
-#include "quark/logger.h"
 #include "quark/compiler_context.h"
 
-#include <functional>
+#include "utils/logger.h"
+
+using namespace utils::logger;
 
 namespace quark::ps {
 
@@ -16,7 +17,15 @@ namespace quark::ps {
             }
             return false;
         }
-
+        ast::BinaryOp get_op_from_token(TokenType type){
+            switch(type){
+                case TOKEN_PLUS: return ast::BinaryOp::Add;
+                case TOKEN_MINUS: return ast::BinaryOp::Sub;
+                case TOKEN_SLASH: return ast::BinaryOp::Div;
+                case TOKEN_EQ: return ast::BinaryOp::Eq;
+                case TOKEN_NEQ: return ast::BinaryOp::NotEq;       
+            }
+        }
         ast::Expr make_none_expr() {
             ast::Expr ret;
             ret.kind = ast::NoneExpr{};
@@ -40,12 +49,6 @@ namespace quark::ps {
             ret.kind = ast::VarExpr{ name };
             return ret;
         }
-
-        ast::Expr make_some_expr(ast::Expr&& value) {
-            ast::Expr ret;
-            ret.kind = ast::SomeExpr{ std::make_unique<ast::Expr>(std::move(value)) };
-            return ret;
-        }      
     }
 
     Parser::Parser(lx::Lexer& lex, CompilerContext& ctx_): lexer(lex), ctx(ctx_){
@@ -78,33 +81,46 @@ namespace quark::ps {
 
     Token Parser::expect(TokenType type, const char* msg) {
         if (!check(type)) {
-            logger::log_error(msg, " got: ", current.text,
-                            " at ", current.line, ":", current.column);
+            error(current.loc, msg);
         }
         return advance();
     }
 
-    ast::Stmt Parser::parse_statement() { // TODO: If,Func,While etc.
-        if (match(TOKEN_VAR))    { return ast::Stmt{ parse_var() }; }
+    ast::Stmt Parser::parse_statement() {
+        if (check(TOKEN_IDENT)) {
+            return ast::Stmt{ parse_var() };
+        }
+
         if (match(TOKEN_RETURN)) { return ast::Stmt{ parse_return() }; }
         if (match(TOKEN_IF))     { return ast::Stmt{ parse_if() }; }
-        if (match(TOKEN_FUNC))   { return ast::Stmt{ parse_func()} ; }
+        if (match(TOKEN_FUNC))   { return ast::Stmt{ parse_func() }; }
         if (match(TOKEN_WHILE))  { return ast::Stmt{ parse_while() }; }
 
         ast::Expr expr = parse_expr();
         expect(TOKEN_SEMICOLON, "Expected ';' after expression");
-        return ast::Stmt{ ast::ExprStmt{ std::make_unique<ast::Expr>(std::move(expr)) } };
+
+        return ast::Stmt{
+            ast::ExprStmt{
+                std::make_unique<ast::Expr>(std::move(expr))
+            }
+        };
     }
 
     ast::VarDecl Parser::parse_var() {
-        // var x: opt int = 10;
+        // x: int = 10;
         ast::VarDecl ret{};
 
-        ret.name = expect(TOKEN_IDENT, "Expected variable name after the type name").text;
+        Token name = expect(TOKEN_IDENT, "Expected variable name");
+        ret.name = name.text;
+
         expect(TOKEN_COLON, "Expected ':' after variable name");
+
         ret.type = parse_type();
+
         expect(TOKEN_EQ, "Expected '=' after variable type");
+
         ret.value = std::make_unique<ast::Expr>(parse_expr());
+
         expect(TOKEN_SEMICOLON, "Expected ';'");
 
         return ret;
@@ -122,11 +138,11 @@ namespace quark::ps {
         }
 
         if (!is_type_token(current.type)) {
-            logger::log_error("Expected type");
+            error(current.loc, "Expected type");
             return ctx.types.get_int();
         }
 
-        return get_type_from_token(advance().type);
+        return get_type_from_token(advance());
     }
     ast::ReturnStmt Parser::parse_return() {
         ast::ReturnStmt ret;
@@ -194,14 +210,12 @@ namespace quark::ps {
 
         while (true) {
             if (!is_type_token(current.type)) {
-                logger::log_error("Expected argument type...");
+                error(current.loc, "Expected argument type...");
                 advance();
                 if (check(TOKEN_RPAREN)) break;
                 continue;
             }
-
-            TokenType t = advance().type;
-            const Type* type = get_type_from_token(t);
+            const Type* type = get_type_from_token(advance());
 
             auto name = std::string(expect(TOKEN_IDENT, "Expected arg name").text);
 
@@ -210,7 +224,7 @@ namespace quark::ps {
             if (match(TOKEN_COMMA)) continue;
             if (check(TOKEN_RPAREN)) break;
 
-            logger::log_error("Expected ',' or ')'");
+            error(current.loc, "Expected ',' or ')'");
             advance();
         }
 
@@ -222,10 +236,12 @@ namespace quark::ps {
     }
 
     ast::Expr Parser::parse_assignment() {
-        ast::Expr left = parse_primary();
+        ast::Expr left = parse_additive();
 
-            if (match(TOKEN_EQ)) {
-                ast::Expr right = parse_assignment();
+        if (match(TOKEN_EQ)) {
+            ast::Expr right = parse_assignment();
+
+            if (auto* var = std::get_if<ast::VarExpr>(&left.kind)) {
                 ast::Expr ret;
                 ret.kind = ast::AssignExpr{
                     std::make_unique<ast::Expr>(std::move(left)),
@@ -233,8 +249,51 @@ namespace quark::ps {
                 };
                 return ret;
             }
-
+            error(right.loc, "Invalid assignment target");
             return left;
+        }
+
+        return left;
+    }
+    ast::Expr Parser::parse_additive() {
+        ast::Expr expr = parse_multiplicative();
+
+        while (match(TOKEN_PLUS) || match(TOKEN_MINUS)) {
+            Token op = previous;
+
+            ast::Expr right = parse_multiplicative();
+
+            ast::Expr new_expr;
+            new_expr.kind = ast::BinaryExpr{
+                std::make_unique<ast::Expr>(std::move(expr)),
+                std::make_unique<ast::Expr>(std::move(right)),
+                get_op_from_token(op.type)
+            };
+
+            expr = std::move(new_expr);
+        }
+
+        return expr;
+    }
+    ast::Expr Parser::parse_multiplicative() {
+        ast::Expr expr = parse_primary();
+
+        while (match(TOKEN_STAR) || match(TOKEN_SLASH)) {
+            Token op = previous;
+
+            ast::Expr right = parse_primary();
+
+            ast::Expr new_expr;
+            new_expr.kind = ast::BinaryExpr{
+                std::make_unique<ast::Expr>(std::move(expr)),
+                std::make_unique<ast::Expr>(std::move(right)),
+                get_op_from_token(op.type)
+            };
+
+            expr = std::move(new_expr);
+        }
+
+        return expr;
     }
     ast::Expr Parser::parse_primary(){
             if (match(TOKEN_NUMBER)) {
@@ -256,17 +315,17 @@ namespace quark::ps {
                 expect(TOKEN_RPAREN, "Expected ')'");
                 return expr;
             }
-
-            logger::log_error("Unexpected token: ", current.text);
+            std::string msg = "Unexpected token" + std::string(current.text);
+            error(current.loc, msg);
             advance();
             return make_none_expr();      
     }
-    const ast::Type* Parser::get_type_from_token(TokenType t) {
-            switch (t) {
+    const ast::Type* Parser::get_type_from_token(Token t) {
+            switch (t.type) {
                 case TOKEN_INT:    return ctx.types.get_int();
                 case TOKEN_STRING: return ctx.types.get_string();
                 default:           
-                        logger::log_error("Unknown type token");
+                        error(t.loc, "Unknown type token");
                         return ctx.types.get_int();
             }
     }

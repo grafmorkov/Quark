@@ -1,6 +1,6 @@
 # Quark
 
-**Quark** is a minimalist compiled programming language, currently in the early stages of development.
+**Quark** is a minimalist compiled programming language, that is currently building into **C**.
 
 ---
 
@@ -25,6 +25,23 @@ cmake --build .
 ```
 
 ---
+## Requirenment
+To build Quark from source you have to install a C compiler. For example,
+    - Clang, (The main compiler of Quark)
+    - GCC,
+    - etc.
+If you want to change the compiler, just change this block of code in main:
+```cpp
+// Build clang
+    if (opts.build || opts.run) {
+        std::string cmd = "clang out.c -o out";
+
+        if (std::system(cmd.c_str()) != 0) {
+            utils::logger::error("Clang build failed\n");
+            return 1;
+        }
+    }
+```
 
 ## Running Quark
 
@@ -41,25 +58,33 @@ You can run the compiler on a `.qk` file like this:
 | Lexical Analysis    | ✅ Completed | Tokenization of input source code |
 | Syntax Analysis     | ✅ Completed | AST construction via parsing |
 | Semantic Analysis   | ✅ Completed  | Type checking and scope resolution |
+| Code Generation     | ✅ Planned | Target code emission |
 | Optimization        | 📝 Planned | Intermediate code optimization |
-| Code Generation     | 📝 Planned | Target code emission |
 
 ---
-## The Demo version of the syntax:
+## The Syntax of the Quark:
 ```qk
 // This is a comment
 /*
     This is another comment
 */
 func main() void {
-    var x: opt int; // can be none(null)
-    var y: int; // basic variable, cannot be none(null)
+    x: int = 10;
+
+    y: int = x + 2;
+
+    if(x > 5){
+        x = 0; 
+    }
+    else{
+        x = 1;
+    }
 }    
 ```
 
 ## Contributing
 
-If you want to help develop Quark, feel free to open issues, submit pull requests, or suggest features. Any contributions are welcome!
+If you want to help develop Quark, you can just fork the repo, or dm grafmorkov(me) in Discord, Telegram, etc. 
 
 ---
 

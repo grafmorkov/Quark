@@ -6,11 +6,18 @@
 #include <memory>
 #include <optional>
 
+#include "codegen/ir.h"
+#include "utils/logger.h"
+
+using namespace quark::codegen;
+
 namespace quark::ast {
 
     struct Expr;
     struct Stmt;
     struct Type;
+
+    struct ASTVisitor;
 
     struct Type {
         enum Kind{
@@ -28,64 +35,71 @@ namespace quark::ast {
 
     struct StringLit {
         std::string value;
-    }; 
+    };
 
     struct VarExpr {
         std::string name;
     };
+    enum class BinaryOp {
+        Add,
+        Sub,
+        Mul,
+        Div,
+        Eq,
+        NotEq,
+        // ...
+    };
+    struct BinaryExpr {
+        std::unique_ptr<Expr> lhs;
+        std::unique_ptr<Expr> rhs;
+        BinaryOp op;
+    };
+
     struct AssignExpr {
         std::unique_ptr<Expr> target;
-        std::unique_ptr<Expr> value;
-    };
-    struct SomeExpr {
         std::unique_ptr<Expr> value;
     };
 
     struct NoneExpr {};
 
-    /*
-    Match is for opt variables. For example, 
-        var x: opt int = 10; 
-        z := match(x){ 
-            Some(v) => v; 
-            None => 0; 
-        } 
+    /* x: opt int = 10 ?? 0;
+    ?? - if none -> 0, else -> 10;
     */
-    struct MatchExpr {
-        std::unique_ptr<Expr> value;
-
-        enum class PatternKind {
-            Some,
-            None
-        };
-
-        struct Case {
-            PatternKind pattern;
-            std::optional<std::string> bindName;
-            std::unique_ptr<Expr> body;
-        };
-
-        std::vector<Case> cases;
+    struct NullCoalesceExpr{
+        std::unique_ptr<Expr> lhs;
+        std::unique_ptr<Expr> rhs;
     };
 
     struct BlockExpr {
         std::vector<std::unique_ptr<Stmt>> statements;
+    };
+    /* if(x => v){
+
+    }
+    <=> 
+    if(x.has_value){
+        v: int = x.value;
+    }
+    */
+    struct OptionalBindExpr {
+        std::unique_ptr<Expr> value; // x
+        std::string name;            // v
     };
 
     using ExprKind = std::variant<
         IntLit,
         StringLit,
         VarExpr,
-        SomeExpr,
         NoneExpr,
-        MatchExpr,
-        AssignExpr,
-        BlockExpr
+        NullCoalesceExpr,
+        OptionalBindExpr,
+        BinaryExpr,
+        AssignExpr
     >;
 
     struct Expr {
         ExprKind kind;
-        std::unique_ptr<Type> inferred_type = nullptr;
+        SourceLocation loc;
     };
 
     struct VarDecl {
@@ -100,14 +114,13 @@ namespace quark::ast {
     struct IfStmt {
         std::unique_ptr<Expr> condition;
         std::unique_ptr<BlockExpr> thenBranch;
-        std::unique_ptr<BlockExpr> elseBranch; 
+        std::unique_ptr<BlockExpr> elseBranch;
     };
 
     struct WhileStmt {
         std::unique_ptr<Expr> condition;
         std::unique_ptr<BlockExpr> body;
     };
-    
 
     struct ReturnStmt {
         std::unique_ptr<Expr> value;
@@ -133,6 +146,6 @@ namespace quark::ast {
 
     struct Stmt {
         StmtKind kind;
+        SourceLocation loc;
     };
-
 }

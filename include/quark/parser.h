@@ -22,6 +22,8 @@ namespace quark::ps {
         ast::Expr parse_expr();
         ast::Expr parse_assignment();
         ast::Expr parse_primary();
+        ast::Expr parse_additive();
+        ast::Expr parse_multiplicative();
 
         // Statements
         ast::Stmt parse_statement();
@@ -39,7 +41,7 @@ namespace quark::ps {
 
         // Compiler Context
         CompilerContext& ctx;
-        const ast::Type* get_type_from_token(TokenType t);
+        const ast::Type* get_type_from_token(Token t);
 
     public:
         Parser(lx::Lexer& lex, CompilerContext& ctx);

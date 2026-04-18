@@ -7,7 +7,9 @@
 #include <vector>
 
 #include "quark/token.h"
-#include "quark/logger.h"
+#include "quark/compiler_context.h"
+
+#include "utils/logger.h"
 
 namespace quark::lx{
 
@@ -16,9 +18,8 @@ namespace quark::lx{
             std::string buffer;
             size_t pos;
             int start;
-            int line;
-            int column;
 
+            CompilerContext& ctx;
             int token_line;
             int token_column;
 
@@ -37,19 +38,20 @@ namespace quark::lx{
         public:
             Token next_token();
             
-        Lexer(const char *fileName){
+        Lexer(const char *fileName, CompilerContext& _ctx): ctx(_ctx){
             std::ifstream f(fileName, std::ios::binary); 
 
             if (!f) 
-                logger::fatal("Failed to read the file while creating lexer!"); 
+                utils::logger::fatal("Failed to read the file while creating lexer!"); 
 
             buffer = std::string( 
                 (std::istreambuf_iterator<char>(f)), 
                 std::istreambuf_iterator<char>() );
             pos = 0;
             start = 0;
-            line = 1;
-            column = 1;
+            ctx.srcloc.line = 1;
+            ctx.srcloc.column = 1;
+            ctx.srcloc.file = fileName;
         }
     };
 }

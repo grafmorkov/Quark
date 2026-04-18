@@ -4,7 +4,6 @@
 #include <cctype>
 
 #include "quark/lexer.h"
-#include "quark/logger.h"
 #include "quark/token.h"
 
 constexpr unsigned int str_hash(const char* str, int h = 0){
@@ -25,10 +24,10 @@ namespace quark::lx {
         pos++;
 
         if (c == '\n') {
-            line++;
-            column = 1;
+            ctx.srcloc.line++;
+            ctx.srcloc.column = 1;
         } else {
-            column++;
+            ctx.srcloc.column++;
         }
 
         return c;
@@ -48,8 +47,8 @@ namespace quark::lx {
         }
 
         start = pos;
-        token_line = line;
-        token_column = column;
+        token_line = ctx.srcloc.line;
+        token_column = ctx.srcloc.column;
 
         char c = advance();
 
@@ -69,7 +68,17 @@ namespace quark::lx {
             case '[': return make_token(TOKEN_LBRACKET);
             case ']': return make_token(TOKEN_RBRACKET);
             case ',': return make_token(TOKEN_COMMA);
-            case '=': return make_token(match('=') ? TOKEN_EQEQ : TOKEN_EQ);
+            case '=': 
+                if(match('=')){
+                    return make_token(TOKEN_EQEQ);
+                }
+                else if(match('>')){
+                    return make_token(TOKEN_EQA);
+                }
+                else{
+                    return make_token(TOKEN_EQ);
+                }
+
             case '!': return make_token(match('=') ? TOKEN_NEQ : TOKEN_NOT);
             case '<': return make_token(match('=') ? TOKEN_LTE : TOKEN_LT);
             case '>': return make_token(match('=') ? TOKEN_GTE : TOKEN_GT);
@@ -90,8 +99,8 @@ namespace quark::lx {
                             break;
                         }
                         if (peek() == '\n') {
-                            line++;
-                            column = 1;
+                            ctx.srcloc.line++;
+                            ctx.srcloc.column = 1;
                         }
                         advance();
                     }
@@ -107,8 +116,7 @@ namespace quark::lx {
             type,
             std::string_view(buffer.data() + start, pos - start),
             {},
-            token_line,
-            token_column
+            {ctx.srcloc.file, token_line, token_column}
         };
     }
     Token Lexer::make_number() {
@@ -157,8 +165,8 @@ namespace quark::lx {
     Token Lexer::string() {
         while (peek() != '"' && !is_at_end()) {
             if (peek() == '\n') {
-                line++;
-                column = 1;
+                ctx.srcloc.line++;
+                ctx.srcloc.column = 1;
             }
             advance();
         }

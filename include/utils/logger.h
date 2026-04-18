@@ -1,0 +1,36 @@
+#pragma once
+#include <iostream>
+#include <string_view>
+#include <cstdlib>
+#include <chrono>
+#include <sstream>
+
+#include "quark/colors.h" 
+
+using namespace quark::colors;
+
+namespace quark{
+
+    struct SourceLocation {
+        std::string file;
+        int line = -1;
+        int column = -1;
+    };
+}
+using namespace quark;
+
+namespace utils::logger{
+    // diagnostics (WITH location)
+    void info(const SourceLocation& loc, const std::string& msg);
+    void warn(const SourceLocation& loc, const std::string& msg);
+    void error(const SourceLocation& loc, const std::string& msg);
+
+    // system logs (WITHOUT location)
+    void info(const std::string& msg);
+    void warn(const std::string& msg);
+    void error(const std::string& msg);
+
+    // fatal can be both
+    [[noreturn]] void fatal(const std::string& msg);
+    [[noreturn]] void fatal(const SourceLocation& loc, const std::string& msg);
+}

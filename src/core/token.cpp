@@ -40,6 +40,7 @@ namespace quark{
             case TOKEN_EQ: return "=";
             case TOKEN_EQEQ: return "==";
             case TOKEN_NEQ: return "!=";
+            case TOKEN_EQA: return "=>";
 
             case TOKEN_LT: return "<";
             case TOKEN_LTE: return "<=";
