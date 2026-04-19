@@ -86,14 +86,19 @@ namespace quark::lx {
             case '-': return make_token(TOKEN_MINUS);
             case '*': return make_token(TOKEN_STAR);
             case ';': return make_token(TOKEN_SEMICOLON);
-            case ':': return make_token(match('=') ? TOKEN_CEQ: TOKEN_COLON);
+            case '?': 
+                if(match('?')){
+                    return make_token(TOKEN_QUESTION_QUESTION);
+                }
+                return make_token(TOKEN_QUESTION);
+            case ':': return make_token(TOKEN_COLON);
             case '/':
                 if (match('/')) {
                     while (peek() != '\n' && !is_at_end()) advance();
                     return next_token();
                 } else if (match('*')) {
                     while (!is_at_end()) {
-                        if (peek() == '*' && buffer[pos + 1] == '/') {
+                        if (peek() == '*' && pos + 1 < buffer.size() && buffer[pos + 1] == '/') {
                             advance();
                             advance();
                             break;
@@ -130,7 +135,8 @@ namespace quark::lx {
         while (std::isdigit((unsigned char)peek())) {
             advance();
         }
-        if (peek() == '.' && std::isdigit((unsigned char)buffer[pos + 1])) {
+       if (peek() == '.' && pos + 1 < buffer.size() &&
+    std::isdigit((unsigned char)buffer[pos + 1])){
             advance();
 
             while (std::isdigit((unsigned char)peek())) {

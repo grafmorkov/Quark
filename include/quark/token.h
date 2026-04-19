@@ -47,7 +47,8 @@ namespace quark{
         TOKEN_LTE,       // <=
         TOKEN_GT,        // >
         TOKEN_GTE,       // >=
-        TOKEN_CEQ,       // :=
+        TOKEN_QUESTION, // ?
+        TOKEN_QUESTION_QUESTION, // ??
 
         // delimiters
         TOKEN_LPAREN,    // (
@@ -59,9 +60,6 @@ namespace quark{
         TOKEN_COMMA,     // ,
         TOKEN_SEMICOLON // ;
     };
-    bool is_operator(TokenType type);
-    bool is_type(TokenType type);
-
     struct Token {
         TokenType type;
         std::string_view text;

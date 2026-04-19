@@ -64,6 +64,7 @@ private:
     void gen_stmt_node(const VarDecl& node);
     void gen_stmt_node(const ReturnStmt& node);
     void gen_stmt_node(const IfStmt& node);
+    void gen_stmt_node(const WhileStmt& node);
 
     // FALLBACKS
 

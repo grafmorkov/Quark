@@ -58,7 +58,7 @@ You can run the compiler on a `.qk` file like this:
 | Lexical Analysis    | ✅ Completed | Tokenization of input source code |
 | Syntax Analysis     | ✅ Completed | AST construction via parsing |
 | Semantic Analysis   | ✅ Completed  | Type checking and scope resolution |
-| Code Generation     | ✅ Planned | Target code emission |
+| Code Generation     | ✅ Completed | Target code emission |
 | Optimization        | 📝 Planned | Intermediate code optimization |
 
 ---

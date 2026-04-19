@@ -69,6 +69,10 @@ namespace quark::ast {
         std::unique_ptr<Expr> lhs;
         std::unique_ptr<Expr> rhs;
     };
+    struct CallExpr {
+        std::unique_ptr<Expr> callee;
+        std::vector<std::unique_ptr<Expr>> args;
+    };
 
     struct BlockExpr {
         std::vector<std::unique_ptr<Stmt>> statements;
@@ -94,6 +98,7 @@ namespace quark::ast {
         NullCoalesceExpr,
         OptionalBindExpr,
         BinaryExpr,
+        CallExpr,
         AssignExpr
     >;
 

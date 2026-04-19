@@ -12,6 +12,7 @@ namespace quark::codegen{
             std::string op_to_string(IRBinaryOp op) {
                 switch (op) {
                     case IRBinaryOp::Add: return "+";
+                    case IRBinaryOp::Sub: return "-";
                     case IRBinaryOp::Mul: return "*";
                     case IRBinaryOp::Div: return "/";
                 }
@@ -75,4 +76,4 @@ namespace quark::codegen{
                 << node.else_block->name << ";\n";
         }
     };
-}
+} 

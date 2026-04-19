@@ -12,9 +12,9 @@ using namespace quark::colors;
 namespace quark{
 
     struct SourceLocation {
-        std::string file;
-        int line = -1;
-        int column = -1;
+        std::string file = "<unknown>";
+        int line = 0;
+        int column = 0;
     };
 }
 using namespace quark;
