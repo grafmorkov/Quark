@@ -82,10 +82,6 @@ void IRBuilder::create_jump(IRBlock* target) {
 
 // IRGenerator 
 void IRGenerator::gen_program(const std::vector<std::unique_ptr<Stmt>>& program) {
-<<<<<<< HEAD
-    for (const auto& stmt : program) {
-        gen_stmt(*stmt);
-=======
     auto* entry = builder.create_block("entry");
     builder.set_insert_point(entry);
     
@@ -95,7 +91,6 @@ void IRGenerator::gen_program(const std::vector<std::unique_ptr<Stmt>>& program)
         } else {
             gen_stmt(*stmt);
         }
->>>>>>> demo
     }
 }
 
@@ -114,17 +109,11 @@ void IRGenerator::gen_stmt(const Stmt& stmt) {
 void IRGenerator::gen_function(const FuncStmt& func) {
     auto* entry = builder.create_block(func.name);
     builder.set_insert_point(entry);
-<<<<<<< HEAD
-
-    for (auto& stmt : func.body->statements)
-        gen_stmt(*stmt);
-=======
     
     for (auto& stmt : func.body->statements)
         gen_stmt(*stmt);
     
     builder.create_return(builder.create_const(0));
->>>>>>> demo
 }
 
 // EXPRESSIONS
