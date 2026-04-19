@@ -13,7 +13,7 @@ ast::BinaryOp get_op_from_token(TokenType type) {
         case TOKEN_MINUS: return ast::BinaryOp::Sub;
         case TOKEN_STAR:  return ast::BinaryOp::Mul;
         case TOKEN_SLASH: return ast::BinaryOp::Div;
-        case TOKEN_EQ:    return ast::BinaryOp::Eq;
+        case TOKEN_EQEQ:  return ast::BinaryOp::Eq;
         case TOKEN_NEQ:   return ast::BinaryOp::NotEq;
         default:
             return ast::BinaryOp::Add;
@@ -29,7 +29,7 @@ int get_precedence(TokenType t) {
         case TOKEN_MINUS: return 3;
         case TOKEN_STAR:
         case TOKEN_SLASH: return 4;
-        default: return -1; 
+        default: return -1;
     }
 }
 
@@ -95,15 +95,11 @@ Token Parser::peek(int n) {
 // Stmts
 
 ast::Stmt Parser::parse_statement() {
-
     if (check(TOKEN_IDENT)) {
-        Token ident = advance();
-
-        if (match(TOKEN_COLON)) {
-            return ast::Stmt{ parse_var_after_name(ident)};
-        }
-        else{
-            current = ident;
+        if (peek(0).type == TOKEN_COLON) {
+            Token name = advance(); // ident
+            advance(); // ':'
+            return ast::Stmt{ parse_var(name) };
         }
     }
 
@@ -113,7 +109,6 @@ ast::Stmt Parser::parse_statement() {
     if (match(TOKEN_FUNC))   return ast::Stmt{ parse_func() };
 
     ast::Expr expr = parse_expr(0);
-
     expect(TOKEN_SEMICOLON, "Expected ';'");
 
     return ast::Stmt{
@@ -123,11 +118,7 @@ ast::Stmt Parser::parse_statement() {
     };
 }
 
-ast::VarDecl Parser::parse_var() {
-    Token name = expect(TOKEN_IDENT, "Expected variable name");
-    return parse_var_after_name(name);
-}
-ast::VarDecl Parser::parse_var_after_name(Token name) {
+ast::VarDecl Parser::parse_var(Token name) {
     ast::VarDecl decl;
     decl.name = name.text;
     decl.type = parse_type();
@@ -233,6 +224,10 @@ ast::BlockExpr Parser::parse_block() {
 
 ast::Expr Parser::parse_expr(int min_prec) {
     ast::Expr left = parse_prefix();
+
+    if (std::holds_alternative<ast::NoneExpr>(left.kind)) {
+        return left;
+    }
     left = parse_postfix(std::move(left));
 
     while (true) {
@@ -241,7 +236,26 @@ ast::Expr Parser::parse_expr(int min_prec) {
 
         Token op = advance();
 
+        if (op.type == TOKEN_EQ) {
+            if (!std::holds_alternative<ast::VarExpr>(left.kind)) {
+                error(op.loc, "Invalid assignment target");
+                return left;
+            }
+
+            ast::Expr right = parse_expr(prec);
+
+            ast::Expr e;
+            e.kind = ast::AssignExpr{
+                std::make_unique<ast::Expr>(std::move(left)),
+                std::make_unique<ast::Expr>(std::move(right))
+            };
+
+            left = std::move(e);
+            continue;
+        }
+
         ast::Expr right = parse_expr(prec + 1);
+        
 
         left = make_binary(std::move(left), std::move(right), op.type);
     }
@@ -276,8 +290,6 @@ ast::Expr Parser::parse_prefix() {
     }
 
     error(current.loc, "Unexpected token");
-    advance();
-
     return ast::Expr{ ast::NoneExpr{} };
 }
 
@@ -319,7 +331,7 @@ ast::Expr Parser::parse_postfix(ast::Expr left) {
 
 ast::Expr Parser::make_binary(ast::Expr left, ast::Expr right, TokenType op) {
     ast::Expr e;
-    e.loc = left.loc;
+    //e.loc = left.loc;
 
     e.kind = ast::BinaryExpr{
         std::make_unique<ast::Expr>(std::move(left)),
@@ -338,7 +350,7 @@ const ast::Type* Parser::parse_type() {
     if (match(TOKEN_STRING)) return ctx.types.get_string();
     if (match(TOKEN_VOID)) return ctx.types.get_void();
 
-    error(current.loc, "Expected type");
+    //error(current.loc, "Expected type");
     return ctx.types.get_int();
 }
 

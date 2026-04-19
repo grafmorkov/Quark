@@ -36,8 +36,7 @@ namespace quark::ps {
 
             // statements
             ast::Stmt parse_statement();
-            ast::VarDecl parse_var();
-            ast::VarDecl parse_var_after_name(Token name);
+            ast::VarDecl parse_var(Token name);
             ast::BlockExpr parse_block();
             ast::IfStmt parse_if();
             ast::WhileStmt parse_while();

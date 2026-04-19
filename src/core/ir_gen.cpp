@@ -172,22 +172,33 @@ void IRGenerator::gen_stmt_node(const IfStmt& node) {
     auto cond = gen_expr(*node.condition);
 
     auto* then_block = builder.create_block("then");
-    auto* else_block = builder.create_block("else");
     auto* end_block  = builder.create_block("end");
 
-    builder.create_branch(cond, then_block, else_block);
+    IRBlock* else_block = nullptr;
 
+    if (node.elseBranch) {
+        else_block = builder.create_block("else");
+        builder.create_branch(cond, then_block, else_block);
+    } else {
+        builder.create_branch(cond, then_block, end_block);
+    }
+
+    // THEN
     builder.set_insert_point(then_block);
     for (auto& s : node.thenBranch->statements)
         gen_stmt(*s);
+
+    // если блок не завершён — делаем jump
     builder.create_jump(end_block);
 
-    builder.set_insert_point(else_block);
+    // ELSE
     if (node.elseBranch) {
+        builder.set_insert_point(else_block);
         for (auto& s : node.elseBranch->statements)
             gen_stmt(*s);
+
+        builder.create_jump(end_block);
     }
-    builder.create_jump(end_block);
 
     builder.set_insert_point(end_block);
 }
