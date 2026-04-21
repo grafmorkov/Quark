@@ -25,20 +25,20 @@ enum class IRBinaryOp {
 // INST FORWARD DECL
 
 struct IRBinary;
-struct IRLoad;
 struct IRStore;
 struct IRReturn;
 struct IRBranch;
+struct IRAlloc;
 struct IRJump;
 
 //  INST VARIANT 
 
 using IRInst = std::variant<
     IRBinary,
-    IRLoad,
     IRStore,
     IRReturn,
     IRBranch,
+    IRAlloc,
     IRJump
 >;
 
@@ -47,8 +47,9 @@ using IRInst = std::variant<
 struct IRBlock {
     std::string name;
     std::vector<IRInst> inst;
+        bool terminated = false;
 
-    void IRBlock::dump() const;
+    void dump() const;
 };
 
 // INSTRUCTIONS 
@@ -60,10 +61,10 @@ struct IRBinary {
     IRValue rhs;
 };
 
-struct IRLoad {
-    IRValue res;
-    IRValue var;
+struct IRAlloc{
+    std::string name;
 };
+
 
 struct IRStore {
     IRValue target;
@@ -87,7 +88,6 @@ struct IRJump {
 // ---- INSTRUCTION DUMP ----
 
 void dump_instr(const IRBinary& i);
-void dump_instr(const IRLoad& i);
 void dump_instr(const IRStore& i);
 void dump_instr(const IRReturn& i);
 void dump_instr(const IRBranch& i);

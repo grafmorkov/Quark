@@ -331,7 +331,7 @@ ast::Expr Parser::parse_postfix(ast::Expr left) {
 
 ast::Expr Parser::make_binary(ast::Expr left, ast::Expr right, TokenType op) {
     ast::Expr e;
-    //e.loc = left.loc;
+    e.loc = left.loc;
 
     e.kind = ast::BinaryExpr{
         std::make_unique<ast::Expr>(std::move(left)),
@@ -350,7 +350,7 @@ const ast::Type* Parser::parse_type() {
     if (match(TOKEN_STRING)) return ctx.types.get_string();
     if (match(TOKEN_VOID)) return ctx.types.get_void();
 
-    //error(current.loc, "Expected type");
+    error(current.loc, "Expected type");
     return ctx.types.get_int();
 }
 

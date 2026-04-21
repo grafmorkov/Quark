@@ -1,5 +1,7 @@
 #include "quark/codegen/ir_gen.h"
+#include "utils/logger.h"
 
+using namespace utils::logger;
 // IRBuilder 
 
 namespace quark::codegen {
@@ -40,23 +42,31 @@ IRValue IRBuilder::create_binary(IRBinaryOp op, IRValue lhs, IRValue rhs) {
     return res;
 }
 
-IRValue IRBuilder::create_load(IRValue var) {
+void IRBuilder::create_alloc(const std::string& name) {
     ensure_block();
 
-    IRValue res = make_temp();
+    if (variables.find(name) != variables.end()) {
+        crash(
+            "The variable '" + name + "' has already been declared"
+        );
+    }
 
-    current_block->inst.push_back(IRLoad{
-        res, var
-    });
+    IRValue v = make_temp();
+    variables[name] = v;
 
-    return res;
+    current_block->inst.push_back(IRAlloc{v.name});
 }
-
-void IRBuilder::create_store(IRValue target, IRValue value) {
+void IRBuilder::create_store(const std::string& name, IRValue value) {
     ensure_block();
+
+    auto it = variables.find(name);
+    if (it == variables.end()) {
+        crash("Undefined variable: '" + name + "'" );
+    }
 
     current_block->inst.push_back(IRStore{
-        target, value
+        it->second,
+        value
     });
 }
 
@@ -107,13 +117,8 @@ void IRGenerator::gen_stmt(const Stmt& stmt) {
 }
 
 void IRGenerator::gen_function(const FuncStmt& func) {
-    auto* entry = builder.create_block(func.name);
-    builder.set_insert_point(entry);
-    
     for (auto& stmt : func.body->statements)
         gen_stmt(*stmt);
-    
-    builder.create_return(builder.create_const(0));
 }
 
 // EXPRESSIONS
@@ -138,7 +143,11 @@ IRValue IRGenerator::gen_node(const BinaryExpr& node) {
 }
 
 IRValue IRGenerator::gen_node(const VarExpr& node) {
-    return builder.create_load(IRValue{ node.name });
+    auto it = builder.variables.find(node.name);
+
+    if (it == builder.variables.end())
+        crash("Undefined variable: " + node.name);
+    return it->second;
 }
 
 IRValue IRGenerator::gen_node(const AssignExpr& node) {
@@ -146,9 +155,9 @@ IRValue IRGenerator::gen_node(const AssignExpr& node) {
 
     auto* var = std::get_if<VarExpr>(&node.target->kind);
     if (!var)
-        throw std::runtime_error("Assignment target must be variable");
+        crash("Assignment target must be variable");
 
-    builder.create_store(IRValue{ var->name }, value);
+    builder.create_store(var->name, value);
     return value;
 }
 
@@ -160,7 +169,8 @@ void IRGenerator::gen_stmt_node(const ExprStmt& node) {
 
 void IRGenerator::gen_stmt_node(const VarDecl& node) {
     IRValue value = node.value ? gen_expr(*node.value) : builder.create_const(0);
-    builder.create_store(IRValue{ node.name }, value);
+    builder.create_alloc(node.name);
+    builder.create_store(node.name, value);
 }
 
 void IRGenerator::gen_stmt_node(const ReturnStmt& node) {
@@ -188,7 +198,6 @@ void IRGenerator::gen_stmt_node(const IfStmt& node) {
     for (auto& s : node.thenBranch->statements)
         gen_stmt(*s);
 
-    // если блок не завершён — делаем jump
     builder.create_jump(end_block);
 
     // ELSE

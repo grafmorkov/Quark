@@ -40,24 +40,34 @@ int main(int argc, char **argv)
     quark::sm::SemanticAnalyzer sem(ctx);
     sem.analyze(ast);
 
-    // Ir
     quark::codegen::IRGenerator irgen;
-    irgen.gen_program(ast);
+
+    try {
+        irgen.gen_program(ast);
+    } catch (const std::exception& e) {
+        utils::logger::error(std::string("[IR GEN] ") + e.what());
+        return 1;
+    }
 
     if (opts.emit_ir) {
         utils::logger::info("IR");
         irgen.builder.dump();
     }
 
-    // C Code gen
     quark::codegen::CGenerator cgen;
-    std::string c_code = cgen.generate(irgen.builder);
+    std::string c_code;
+
+    try {
+        c_code = cgen.generate(irgen.builder);
+    } catch (const std::exception& e) {
+        utils::logger::error(std::string("[C GEN] ") + e.what());
+        return 1;
+    }
 
     if (opts.emit_c) {
         utils::logger::info("C Code gen:");
         utils::logger::info(c_code);
     }
-
     // Write C File
     std::ofstream file("out.c");
     file << c_code;

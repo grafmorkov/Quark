@@ -38,11 +38,6 @@ namespace quark::codegen{
                 << ", " << i.rhs.name << "\n";
     }
 
-    void dump_instr(const IRLoad& i) {
-        std::cout << "  " << i.res.name
-                << " = load " << i.var.name << "\n";
-    }
-
     void dump_instr(const IRStore& i) {
         std::cout << "  store "
                 << i.value.name
@@ -62,6 +57,9 @@ namespace quark::codegen{
 
     void dump_instr(const IRJump& i) {
         std::cout << "  jmp " << i.target->name << "\n";
+    }
+    void dump_instr(const IRAlloc& i){
+        std::cout << "  alloc " << i.name << "\n";
     }
 
 }

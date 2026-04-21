@@ -59,5 +59,7 @@ void error( const std::string& msg) {
     error(msg);
     std::exit(1);
 }
-
+[[noreturn]] void crash(const std::string& msg){
+    throw std::runtime_error("[crash]: " + msg);
+}
 }

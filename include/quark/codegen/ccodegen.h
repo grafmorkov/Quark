@@ -56,10 +56,6 @@ namespace quark::codegen{
                 << op_to_string(node.op) << " "
                 << node.rhs.name << ";\n";
         }
-        void emit_inst(const IRLoad& node) {
-            out << "    int " << node.res.name
-                << " = " << node.var.name << ";\n";
-        }
         void emit_inst(const IRStore& node) {
             out << "    " << node.target.name
                 << " = " << node.value.name << ";\n";
@@ -74,6 +70,9 @@ namespace quark::codegen{
             out << "    if (" << node.cond.name << ") goto "
                 << node.then_block->name << "; else goto "
                 << node.else_block->name << ";\n";
+        }
+        void emit_inst(const IRAlloc& node){
+            out << "    int " << node.name << "; \n";
         }
     };
 } 
