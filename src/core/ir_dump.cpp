@@ -10,6 +10,12 @@ namespace quark::codegen{
             case IRBinaryOp::Mul: return "mul";
             case IRBinaryOp::Sub: return "sub";
             case IRBinaryOp::Div: return "div";
+            case IRBinaryOp::Eq: return "eq";     
+            case IRBinaryOp::NotEq: return "neq"; 
+            case IRBinaryOp::Lt: return "lt";
+            case IRBinaryOp::Lte: return "lte";
+            case IRBinaryOp::Gt: return "gt";
+            case IRBinaryOp::Gte: return "gte";
         }
         return "unknown";
     }
@@ -38,11 +44,6 @@ namespace quark::codegen{
                 << ", " << i.rhs.name << "\n";
     }
 
-    void dump_instr(const IRLoad& i) {
-        std::cout << "  " << i.res.name
-                << " = load " << i.var.name << "\n";
-    }
-
     void dump_instr(const IRStore& i) {
         std::cout << "  store "
                 << i.value.name
@@ -63,5 +64,23 @@ namespace quark::codegen{
     void dump_instr(const IRJump& i) {
         std::cout << "  jmp " << i.target->name << "\n";
     }
+    void dump_instr(const IRAlloc& i){
+        std::cout << "  alloc " << i.name << "\n";
+    }
+    void dump_instr(const IRCall& i) {
+        if (!i.dst.name.empty()) {
+            std::cout << i.dst.name << " = ";
+        }
 
+        std::cout << "call " << i.callee.name << "(";
+
+        for (size_t j = 0; j < i.args.size(); ++j) {
+            if (j > 0) {
+                std::cout << ", ";
+            }
+            std::cout << i.args[j].name;
+        }
+
+        std::cout << ")";
+    }
 }

@@ -22,12 +22,12 @@ namespace quark{
             case TOKEN_RETURN: return "RETURN";
             case TOKEN_FUNC: return "FUNC";
             case TOKEN_VAR: return "VAR";
+            case TOKEN_MUT: return "MUT";
 
             // types
             case TOKEN_VOID: return "VOID";
             case TOKEN_INT: return "INT";
             case TOKEN_FLOAT: return "FLOAT";
-            case TOKEN_OPT: return "OPT";
 
             // operators
             case TOKEN_PLUS: return "+";

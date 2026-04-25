@@ -23,12 +23,12 @@ namespace quark{
         TOKEN_RETURN,
         TOKEN_FUNC,
         TOKEN_VAR,
+        TOKEN_MUT, 
 
         // types
         TOKEN_VOID,
         TOKEN_INT,
         TOKEN_FLOAT,
-        TOKEN_OPT,
 
         // operators
         TOKEN_PLUS,      // +

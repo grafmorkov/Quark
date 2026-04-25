@@ -16,20 +16,11 @@ bool types_equal(const ast::Type* a, const ast::Type* b) {
 
     if (a->kind != b->kind) return false;
 
-    if (a->kind == ast::Type::Optional) {
-        return types_equal(a->inner, b->inner);
-    }
-
     return true;
 }
 
 bool is_assignable(const ast::Type* to, const ast::Type* from) {
     if (types_equal(to, from)) return true;
-
-    // int -> opt int
-    if (to && to->kind == ast::Type::Optional) {
-        return is_assignable(to->inner, from);
-    }
 
     return false;
 }
@@ -61,24 +52,29 @@ void SemanticAnalyzer::analyze_stmt(const ast::Stmt* stmt) {
 // Smtm Nodes
 
 void SemanticAnalyzer::analyze_stmt_node(const ast::VarDecl& var) {
+    if (!var.is_mut && !var.value) {
+        crash("[Semantic]: Immutable variable must be initialized: " + var.name);
+        return;
+    }
+
     const ast::Type* value_type = nullptr;
 
     if (var.value) {
         value_type = analyze_expr(var.value.get());
+        if (!value_type) return;
+
+        if (!is_assignable(var.type, value_type)) {
+            crash("[Semantic]: Type mismatch in variable initialization: " + var.name);
+            return;
+        }
     }
 
-    if (!ctx.symbols.declare(var.name, var.type)) {
-        error("Variable already declared: " + var.name);
+    if (!ctx.symbols.declare(var.name, var.type, var.is_mut, var.value != nullptr)) {
+        crash("[Semantic]: Variable already declared: " + var.name);
         return;
     }
-
-    if (!value_type) return;
-
-    if (!is_assignable(var.type, value_type)) {
-        error("Type mismatch in variable initialization: " + var.name);
-    }
 }
-
+// TODO: Report error
 void SemanticAnalyzer::analyze_stmt_node(const ast::ExprStmt& expr) {
     analyze_expr(expr.expr.get());
 }
@@ -93,12 +89,12 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::ReturnStmt& ret) {
     }
 
     if (!current_function_return_type) {
-        error("Return outside function");
+        crash("[Semantic]: Return outside function");
         return;
     }
 
     if (!is_assignable(current_function_return_type, value_type)) {
-        error("Return type mismatch");
+        crash("[Semantic]: Return type mismatch");
     }
 }
 
@@ -109,7 +105,10 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::FuncStmt& func) {
     ctx.symbols.enter_scope();
 
     for (const auto& arg : func.args) {
-        ctx.symbols.declare(arg.name, arg.type);
+        if (!ctx.symbols.declare(arg.name, arg.type, arg.is_mut, true)) {
+            crash("[Semantic]: Argument already declared: " + arg.name);
+            continue;
+        }
     }
 
     for (const auto& stmt : func.body->statements) {
@@ -131,7 +130,6 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::IfStmt& stmt) {
         analyze_block(stmt.elseBranch.get());
     }
 }
-
 void SemanticAnalyzer::analyze_stmt_node(const ast::WhileStmt& stmt) {
     analyze_expr(stmt.condition.get());
 
@@ -160,39 +158,49 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::VarExpr& var) {
     auto* sym = ctx.symbols.lookup(var.name);
 
     if (!sym) {
-        error("Undefined variable: " + var.name);
+        crash("[Semantic]: Undefined variable: " + var.name);
+        return nullptr;
+    }
+
+    if (!sym->initialized) {
+        crash("[Semantic]: Use of uninitialized variable: " + var.name);
         return nullptr;
     }
 
     return sym->type;
 }
-
-// Simple Assign (C-like)
+const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::NoneExpr& none){
+    return ctx.types.get_void();
+}
 
 const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::AssignExpr& asg) {
     const ast::Type* value_type = analyze_expr(asg.value.get());
-
     if (!value_type) return nullptr;
 
-    // target must be variable (C-like restriction)
     if (!std::holds_alternative<ast::VarExpr>(asg.target->kind)) {
-        error("Assignment target must be a variable");
+        crash("[Semantic]: Assignment target must be a variable");
         return nullptr;
     }
 
     const auto& var = std::get<ast::VarExpr>(asg.target->kind);
 
     auto* sym = ctx.symbols.lookup(var.name);
-
     if (!sym) {
-        error("Undefined variable: " + var.name);
+        crash("[Semantic]: Undefined variable: " + var.name);
+        return nullptr;
+    }
+
+    if (!sym->is_mut) {
+        crash("[Semantic]: Cannot assign to immutable variable: " + var.name);
         return nullptr;
     }
 
     if (!is_assignable(sym->type, value_type)) {
-        error("Type mismatch in assignment");
+        crash("[Semantic]: Type mismatch in assignment");
+        return nullptr;
     }
 
+    sym->initialized = true;
     return sym->type;
 }
 
@@ -203,44 +211,15 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::BinaryExpr& b) {
     if (!l || !r) return nullptr;
 
     if (!types_equal(l, r)) {
-        error("Type mismatch in binary expression");
+        crash("[Semantic]: Type mismatch in binary expression");
         return nullptr;
     }
 
     return l;
 }
 
-const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::NoneExpr&) {
-    return ctx.types.get_optional(ctx.types.get_void());
-}
-
-const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::NullCoalesceExpr& n) {
-    auto* l = analyze_expr(n.lhs.get());
-    auto* r = analyze_expr(n.rhs.get());
-
-    if (!l || !r) return nullptr;
-
-    if (l->kind != ast::Type::Optional) {
-        error("Left side must be optional");
-        return nullptr;
-    }
-
-    return l->inner;
-}
-
-const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::OptionalBindExpr& opt) {
-    auto* t = analyze_expr(opt.value.get());
-
-    if (!t || t->kind != ast::Type::Optional) {
-        error("Expected optional type");
-        return nullptr;
-    }
-
-    return t->inner;
-}
 const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::CallExpr& call) {
-    return nullptr;
-    //TODO
+    return nullptr; // TODO
 }
 
 // Block
@@ -248,15 +227,12 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::CallExpr& call) 
 const ast::Type* SemanticAnalyzer::analyze_block(const ast::BlockExpr* block) {
     ctx.symbols.enter_scope();
 
-    const ast::Type* last = ctx.types.get_void();
-
     for (const auto& stmt : block->statements) {
         analyze_stmt(stmt.get());
     }
 
     ctx.symbols.exit_scope();
-
-    return last;
+    return ctx.types.get_void();
 }
 
 } // namespace quark::sm

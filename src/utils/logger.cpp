@@ -59,5 +59,18 @@ void error( const std::string& msg) {
     error(msg);
     std::exit(1);
 }
+[[noreturn]] void crash(const std::string& msg){
+    throw std::runtime_error("[crash]: " + msg);
+}
+[[noreturn]] void crash(const SourceLocation& loc, const std::string& msg) {
+    std::ostringstream oss;
 
+    oss << "[crash] ";
+    if (loc.line >= 0) {
+        oss << loc.file << ":" << loc.line << ":" << loc.column << " ";
+    }
+    oss << msg;
+
+    throw std::runtime_error(oss.str());
+}
 }

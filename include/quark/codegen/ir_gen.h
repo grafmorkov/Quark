@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 #include "quark/ast.h"
 using namespace quark::ast;
@@ -16,6 +17,7 @@ struct IRBuilder {
     int temp_id = 0;
 
     std::vector<std::unique_ptr<IRBlock>> blocks;
+    std::unordered_map<std::string, IRValue> variables;
     IRBlock* current_block = nullptr;
 
     void ensure_block();
@@ -27,8 +29,8 @@ struct IRBuilder {
     IRValue create_const(int value);
 
     IRValue create_binary(IRBinaryOp op, IRValue lhs, IRValue rhs);
-    IRValue create_load(IRValue var);
-    void create_store(IRValue target, IRValue value);
+    void create_store(const std::string& name, IRValue value);
+    void create_alloc(const std::string& name, const quark::ast::Type* t);
     void create_return(IRValue value);
     void create_branch(IRValue cond, IRBlock* then_block, IRBlock* else_block);
     void create_jump(IRBlock* target);
@@ -57,6 +59,7 @@ private:
     IRValue gen_node(const BinaryExpr& node);
     IRValue gen_node(const VarExpr& node);
     IRValue gen_node(const AssignExpr& node);
+    IRValue gen_node(const CallExpr& node);
 
     // STATEMENTS
 

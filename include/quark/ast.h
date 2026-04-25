@@ -6,27 +6,22 @@
 #include <memory>
 #include <optional>
 
-#include "codegen/ir.h"
 #include "utils/logger.h"
-
-using namespace quark::codegen;
 
 namespace quark::ast {
 
     struct Expr;
     struct Stmt;
-    struct Type;
 
     struct ASTVisitor;
 
     struct Type {
-        enum Kind{
+        enum Kind {
             Int,
+            Float,
             String,
             Void,
-            Optional
         } kind;
-        const Type* inner = nullptr; // for optional
     };
 
     struct IntLit {
@@ -47,6 +42,10 @@ namespace quark::ast {
         Div,
         Eq,
         NotEq,
+        Lt,
+        Lte,
+        Gt,
+        Gte
         // ...
     };
     struct BinaryExpr {
@@ -59,16 +58,7 @@ namespace quark::ast {
         std::unique_ptr<Expr> target;
         std::unique_ptr<Expr> value;
     };
-
-    struct NoneExpr {};
-
-    /* x: opt int = 10 ?? 0;
-    ?? - if none -> 0, else -> 10;
-    */
-    struct NullCoalesceExpr{
-        std::unique_ptr<Expr> lhs;
-        std::unique_ptr<Expr> rhs;
-    };
+    struct NoneExpr{};
     struct CallExpr {
         std::unique_ptr<Expr> callee;
         std::vector<std::unique_ptr<Expr>> args;
@@ -77,28 +67,14 @@ namespace quark::ast {
     struct BlockExpr {
         std::vector<std::unique_ptr<Stmt>> statements;
     };
-    /* if(x => v){
-
-    }
-    <=> 
-    if(x.has_value){
-        v: int = x.value;
-    }
-    */
-    struct OptionalBindExpr {
-        std::unique_ptr<Expr> value; // x
-        std::string name;            // v
-    };
 
     using ExprKind = std::variant<
         IntLit,
         StringLit,
         VarExpr,
-        NoneExpr,
-        NullCoalesceExpr,
-        OptionalBindExpr,
         BinaryExpr,
         CallExpr,
+        NoneExpr,
         AssignExpr
     >;
 
@@ -110,7 +86,8 @@ namespace quark::ast {
     struct VarDecl {
         std::string name;
         const Type* type;
-        std::unique_ptr<Expr> value;
+        bool is_mut;
+        std::unique_ptr<Expr> value; // nullptr if there is no initialization
     };
 
     struct ExprStmt {
@@ -133,6 +110,7 @@ namespace quark::ast {
     struct FuncArg {
         std::string name;
         const Type* type;
+        bool is_mut;
     };
     struct FuncStmt {
         std::string name;

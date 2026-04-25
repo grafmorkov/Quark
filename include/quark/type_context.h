@@ -11,25 +11,9 @@ namespace quark::types {
             const Type* get_string() const { return &string_type; }
             const Type* get_void() const {return &void_type; }
 
-            const Type* get_optional(const Type* inner) const {
-                auto it = optional_cache.find(inner);
-                if (it != optional_cache.end()) {
-                    return it->second.get();
-                }
-
-                auto t = std::make_unique<Type>();
-                t->kind = Type::Optional;
-                t->inner = inner;
-
-                Type* ptr = t.get();
-                optional_cache[inner] = std::move(t);
-                return ptr;
-            }
-
         private:
             Type int_type{ Type::Int };
             Type string_type{ Type::String };
             Type void_type{ Type::Void };
-            mutable std::unordered_map<const Type*, std::unique_ptr<Type>> optional_cache;
         };
 }

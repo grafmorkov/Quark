@@ -164,7 +164,7 @@ namespace quark::lx {
             case str_hash("int"): return make_token(TOKEN_INT);
             case str_hash("float"): return make_token(TOKEN_FLOAT);
             case str_hash("void"): return make_token(TOKEN_VOID);
-            case str_hash("opt"): return make_token(TOKEN_OPT);
+            case str_hash("mut"): return make_token(TOKEN_MUT);
         }
         return make_token(TOKEN_IDENT);
     }

@@ -1,93 +1,212 @@
 # Quark
 
-**Quark** is a minimalist compiled programming language, that is currently building into **C**.
+**Quark** is an experimental programming language focused on predictable behavior, explicit state, and simple systems-level programming.
+
+It generates **C** source files, which are compiled into a native binary, with any C compiler, such as Clang
+
+Quark is not a C extension. It defines its own rules and uses C only as a backend
 
 ---
 
-## Getting Started
+## Why Quark
 
-To build Quark from source:
+Quark is made for developers who values:
+
+* predictable behavior of their code
+* no magic or hidden state
+* explicit hangling of memory
+* clear semantic of their language
+* easy C/C++ interop without C’s unsafe parts
+
+---
+
+## Philosophy
+
+Quark tries to remove surprises from systems programming.
+
+Whatever is going on in your program, it should be:
+
+* written down in the code
+* visible in the compiler
+* understandable for the developer
+
+No hidden behavior. No guessing.
+
+---
+
+## Quick Example
+
+```qk
+func main() void {
+    x: int = 10;
+    mut y: int = x + 2;
+
+    if (x > 5) {
+        y = 0;
+    } else {
+        y = 1;
+    }
+}
+```
+
+---
+
+## Build
 
 ```bash
-# Clone the repository
+./quark example.qk --build
+```
+
+This will:
+
+1. Parse the code
+2. Build abstract syntax tree(AST)
+3. Generate IR
+4. Check rules (types, variables, state)
+5. Generate C code
+6. Compile it with Clang
+
+---
+
+## Architecture
+
+```
+Source → AST → IR → checks → C → native binary
+```
+
+* AST - source code structure
+* IR - internal representation with applied rules
+* checks - validation phase (no incorrect state allowed)
+* C - final output target
+
+---
+
+## Language rules
+
+Some things in Quark are strictly defined:
+
+* variables have to be explicitly initialized
+* no undefined behavior
+* no hidden memory allocation and usage
+* all modifications should be explicit
+* no runtime environment acting under the hood
+
+Program being compilable guarantees that it is valid Quark program.
+
+---
+
+## Memory
+
+* no garbage collection
+* memory is allocated explicitly by the programmer
+* there are no hidden memory behaviors
+
+Everything concerning memory usage is visible.
+
+---
+
+## CLI commands
+
+```bash
+./quark file.qk            # generates C code
+./quark file.qk --build    # compiles it to executable
+./quark file.qk --run
+```
+
+---
+
+## Example
+
+```qk
+func main() void {
+    x: int = 10;
+    mut y: int = x + 2;
+
+    if (x > 5) {
+        y = 0;
+    } else {
+        y = 1;
+    }
+}
+```
+---
+
+# Design goals
+
+* Predictable programs
+* Simple rules
+* No runtime mysteries
+* Easy code reasoning
+* C compatibility with generated code
+
+---
+
+## Project status
+
+| Component   | Progress  |
+| ----------  | --------- |
+| Lexer       | completed |
+| Parser      | completed |
+| Abstract syntax tree | completed |
+| Intermediate representation | ongoing |
+| Semantic checks | ongoing |
+| Code generation | completed |
+| Optimizations | planned |
+
+---
+
+## Future roadmap
+
+### Short-term plan
+
+* Better error messages
+* Enhanced validation for variables
+* Improvements in IR
+
+### Mid-term plan
+
+* Modules
+* Standard library
+* Improved memory model (regions)
+
+### Long-term plan
+
+* Backends for LLVM or WASM
+* Self-hosted compiler
+
+---
+
+## Building
+
+```sh
 git clone https://github.com/grafmorkov/Quark.git
 cd Quark
 
-# Create and enter the build directory
 mkdir build
 cd build
 
-# Generate build files
 cmake ..
-
-# Compile the project
 cmake --build .
 ```
 
 ---
-## Requirenment
-To build Quark from source you have to install a C compiler. For example,
-    - Clang, (The main compiler of Quark)
-    - GCC,
-    - etc.
-If you want to change the compiler, just change this block of code in main:
-```cpp
-// Build clang
-    if (opts.build || opts.run) {
-        std::string cmd = "clang out.c -o out";
-
-        if (std::system(cmd.c_str()) != 0) {
-            utils::logger::error("Clang build failed\n");
-            return 1;
-        }
-    }
-```
-
-## Running Quark
-
-You can run the compiler on a `.qk` file like this:
-
-```bash
-./quark path/to/file.qk
-```
-
-## Tasks
-
-| Stage               | Status        | Description |
-|--------------------|--------------|------------|
-| Lexical Analysis    | ✅ Completed | Tokenization of input source code |
-| Syntax Analysis     | ✅ Completed | AST construction via parsing |
-| Semantic Analysis   | ✅ Completed  | Type checking and scope resolution |
-| Code Generation     | ✅ Completed | Target code emission |
-| Optimization        | 📝 Planned | Intermediate code optimization |
-
----
-## The Syntax of the Quark:
-```qk
-// This is a comment
-/*
-    This is another comment
-*/
-func main() void {
-    x: int = 10;
-
-    y: int = x + 2;
-
-    if(x > 5){
-        x = 0; 
-    }
-    else{
-        x = 1;
-    }
-}    
-```
 
 ## Contributing
 
-If you want to help develop Quark, you can just fork the repo, or dm grafmorkov(me) in Discord, Telegram, etc. 
+If you are into compilers, IR design and systems programming, please consider contributing.
 
 ---
 
 ## License
 
-This project is licensed under the **[GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.html)**
+GPL-3.0
+
+[https://www.gnu.org/licenses/gpl-3.0.html](https://www.gnu.org/licenses/gpl-3.0.html)
+
+---
+
+## Notice
+
+Quark is not intended to be a universal programming language.
+
+It targets systems programming.

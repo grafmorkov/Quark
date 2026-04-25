@@ -30,7 +30,8 @@ namespace utils::logger{
     void warn(const std::string& msg);
     void error(const std::string& msg);
 
-    // fatal can be both
     [[noreturn]] void fatal(const std::string& msg);
     [[noreturn]] void fatal(const SourceLocation& loc, const std::string& msg);
+    [[noreturn]] void crash(const std::string& msg);
+    [[noreturn]] void crash(const SourceLocation& loc, const std::string& msg);
 }
