@@ -37,7 +37,7 @@ int main(int argc, char **argv)
         quark::ps::Parser parser(lex, ctx);
         ast = parser.parse();
     } catch (const std::exception& e) {
-        utils::logger::error(std::string("[IR GEN] ") + e.what());
+        utils::logger::error(std::string("[parser] ") + e.what());
         return 1;
     }
     // Semantic
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
         sem.analyze(ast);
     }
     catch (const std::exception& e) {
-        utils::logger::error(std::string("[IR GEN] ") + e.what());
+        utils::logger::error(std::string("[semantic] ") + e.what());
             return 1;
     }
 

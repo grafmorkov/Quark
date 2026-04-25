@@ -178,7 +178,7 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::AssignExpr& asg)
     if (!value_type) return nullptr;
 
     if (!std::holds_alternative<ast::VarExpr>(asg.target->kind)) {
-        crash("[Semantic]: Assignment target must be a variable");
+        crash("Assignment target must be a variable");
         return nullptr;
     }
 
@@ -186,17 +186,17 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::AssignExpr& asg)
 
     auto* sym = ctx.symbols.lookup(var.name);
     if (!sym) {
-        crash("[Semantic]: Undefined variable: " + var.name);
+        crash("Undefined variable: " + var.name);
         return nullptr;
     }
 
     if (!sym->is_mut) {
-        crash("[Semantic]: Cannot assign to immutable variable: " + var.name);
+        crash("Cannot assign to immutable variable: " + var.name);
         return nullptr;
     }
 
     if (!is_assignable(sym->type, value_type)) {
-        crash("[Semantic]: Type mismatch in assignment");
+        crash("Type mismatch in assignment");
         return nullptr;
     }
 
@@ -211,7 +211,7 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::BinaryExpr& b) {
     if (!l || !r) return nullptr;
 
     if (!types_equal(l, r)) {
-        crash("[Semantic]: Type mismatch in binary expression");
+        crash("Type mismatch in binary expression");
         return nullptr;
     }
 
