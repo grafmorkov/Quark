@@ -1,7 +1,0 @@
-func main() void {
-    x: int = 10;
-
-    if(x == 10 ){
-       x = 5;
-   }
-}

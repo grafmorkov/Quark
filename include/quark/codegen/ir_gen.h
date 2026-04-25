@@ -30,7 +30,7 @@ struct IRBuilder {
 
     IRValue create_binary(IRBinaryOp op, IRValue lhs, IRValue rhs);
     void create_store(const std::string& name, IRValue value);
-    void create_alloc(const std::string& name);
+    void create_alloc(const std::string& name, const quark::ast::Type* t);
     void create_return(IRValue value);
     void create_branch(IRValue cond, IRBlock* then_block, IRBlock* else_block);
     void create_jump(IRBlock* target);
@@ -59,6 +59,7 @@ private:
     IRValue gen_node(const BinaryExpr& node);
     IRValue gen_node(const VarExpr& node);
     IRValue gen_node(const AssignExpr& node);
+    IRValue gen_node(const CallExpr& node);
 
     // STATEMENTS
 

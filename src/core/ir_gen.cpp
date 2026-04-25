@@ -1,5 +1,6 @@
 #include "quark/codegen/ir_gen.h"
 #include "utils/logger.h"
+#include <utility>
 
 using namespace utils::logger;
 // IRBuilder 
@@ -42,19 +43,18 @@ IRValue IRBuilder::create_binary(IRBinaryOp op, IRValue lhs, IRValue rhs) {
     return res;
 }
 
-void IRBuilder::create_alloc(const std::string& name) {
+void IRBuilder::create_alloc(const std::string& name, const quark::ast::Type* t) {
     ensure_block();
 
     if (variables.find(name) != variables.end()) {
-        crash(
-            "The variable '" + name + "' has already been declared"
-        );
+        crash("The variable '" + name + "' has been already declared");
     }
 
     IRValue v = make_temp();
+    v.type = t;
     variables[name] = v;
 
-    current_block->inst.push_back(IRAlloc{v.name});
+    current_block->inst.push_back(IRAlloc{v.name, t});
 }
 void IRBuilder::create_store(const std::string& name, IRValue value) {
     ensure_block();
@@ -149,6 +149,21 @@ IRValue IRGenerator::gen_node(const VarExpr& node) {
         crash("Undefined variable: " + node.name);
     return it->second;
 }
+IRValue IRGenerator::gen_node(const CallExpr& node) {
+    std::vector<IRValue> args;
+    for (const auto& arg : node.args) {
+        args.push_back(gen_expr(*arg));
+    }
+
+    IRValue callee = gen_expr(*node.callee);
+    IRValue dst = builder.make_temp();
+
+    builder.current_block->inst.push_back(IRCall{
+        callee, args, dst
+    });
+
+    return dst;
+}
 
 IRValue IRGenerator::gen_node(const AssignExpr& node) {
     auto value = gen_expr(*node.value);
@@ -169,7 +184,7 @@ void IRGenerator::gen_stmt_node(const ExprStmt& node) {
 
 void IRGenerator::gen_stmt_node(const VarDecl& node) {
     IRValue value = node.value ? gen_expr(*node.value) : builder.create_const(0);
-    builder.create_alloc(node.name);
+    builder.create_alloc(node.name, node.type);
     builder.create_store(node.name, value);
 }
 
@@ -234,12 +249,17 @@ void IRGenerator::gen_stmt_node(const WhileStmt& node) {
 
 IRBinaryOp IRGenerator::map_op(BinaryOp op) {
     switch (op) {
-        case BinaryOp::Add: return IRBinaryOp::Add;
-        case BinaryOp::Sub: return IRBinaryOp::Sub;
-        case BinaryOp::Mul: return IRBinaryOp::Mul;
-        case BinaryOp::Div: return IRBinaryOp::Div;
+        case BinaryOp::Add:   return IRBinaryOp::Add;
+        case BinaryOp::Sub:   return IRBinaryOp::Sub;
+        case BinaryOp::Mul:   return IRBinaryOp::Mul;
+        case BinaryOp::Div:   return IRBinaryOp::Div;
+        case BinaryOp::Eq:    return IRBinaryOp::Eq;   
+        case BinaryOp::NotEq: return IRBinaryOp::NotEq; 
+        case BinaryOp::Lt:    return IRBinaryOp::Lt;    
+        case BinaryOp::Lte:   return IRBinaryOp::Lte;   
+        case BinaryOp::Gt:    return IRBinaryOp::Gt;    
+        case BinaryOp::Gte:   return IRBinaryOp::Gte;   
         default: throw std::runtime_error("Unsupported binary op");
     }
 }
-
 }

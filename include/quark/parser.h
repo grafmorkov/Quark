@@ -36,7 +36,7 @@ namespace quark::ps {
 
             // statements
             ast::Stmt parse_statement();
-            ast::VarDecl parse_var(Token name);
+            ast::VarDecl parse_var_decl();
             ast::BlockExpr parse_block();
             ast::IfStmt parse_if();
             ast::WhileStmt parse_while();
@@ -53,6 +53,7 @@ namespace quark::ps {
             ast::Expr make_binary(ast::Expr left, ast::Expr right, TokenType op);
             const ast::Type* parse_type();
             const ast::Type* get_type_from_token(Token t);
+            bool is_var_decl();
         };
 
     enum class Precedence {

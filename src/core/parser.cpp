@@ -15,6 +15,10 @@ ast::BinaryOp get_op_from_token(TokenType type) {
         case TOKEN_SLASH: return ast::BinaryOp::Div;
         case TOKEN_EQEQ:  return ast::BinaryOp::Eq;
         case TOKEN_NEQ:   return ast::BinaryOp::NotEq;
+        case TOKEN_LT: return ast::BinaryOp::Lt;
+        case TOKEN_LTE: return ast::BinaryOp::Lte;
+        case TOKEN_GT: return ast::BinaryOp::Gt;
+        case TOKEN_GTE: return ast::BinaryOp::Gte;
         default:
             return ast::BinaryOp::Add;
     }
@@ -82,7 +86,14 @@ bool Parser::match(TokenType type) {
 Token Parser::expect(TokenType type, const char* msg) {
     if (!check(type)) {
         error(current.loc, msg);
+
+        Token bad = current;
+        if (!check(TOKEN_EOF)) {
+            advance();
+        }
+        return bad;
     }
+
     return advance();
 }
 
@@ -95,12 +106,8 @@ Token Parser::peek(int n) {
 // Stmts
 
 ast::Stmt Parser::parse_statement() {
-    if (check(TOKEN_IDENT)) {
-        if (peek(0).type == TOKEN_COLON) {
-            Token name = advance(); // ident
-            advance(); // ':'
-            return ast::Stmt{ parse_var(name) };
-        }
+    if (is_var_decl()) {
+        return ast::Stmt{ parse_var_decl() };
     }
 
     if (match(TOKEN_RETURN)) return ast::Stmt{ parse_return() };
@@ -109,7 +116,7 @@ ast::Stmt Parser::parse_statement() {
     if (match(TOKEN_FUNC))   return ast::Stmt{ parse_func() };
 
     ast::Expr expr = parse_expr(0);
-    expect(TOKEN_SEMICOLON, "Expected ';'");
+    expect(TOKEN_SEMICOLON, "Expected ';' after expression");
 
     return ast::Stmt{
         ast::ExprStmt{
@@ -117,19 +124,37 @@ ast::Stmt Parser::parse_statement() {
         }
     };
 }
+bool Parser::is_var_decl() {
+    if (check(TOKEN_MUT)) {
+        return peek(0).type == TOKEN_IDENT &&
+               peek(1).type == TOKEN_COLON;
+    }
 
-ast::VarDecl Parser::parse_var(Token name) {
-    ast::VarDecl decl;
-    decl.name = name.text;
-    decl.type = parse_type();
+    return check(TOKEN_IDENT) &&
+           peek(0).type == TOKEN_COLON;
+}
+ast::VarDecl Parser::parse_var_decl() {
+    bool is_mut = match(TOKEN_MUT);
 
-    expect(TOKEN_EQ, "Expected '='");
+    Token name = expect(TOKEN_IDENT, "Expected variable name");
+    expect(TOKEN_COLON, "Expected ':'");
 
-    decl.value = std::make_unique<ast::Expr>(parse_expr(0));
+    const Type* type = parse_type();
+
+    std::unique_ptr<ast::Expr> value = nullptr;
+
+    if (match(TOKEN_EQ)) {
+        value = std::make_unique<ast::Expr>(parse_expr(0));
+    }
 
     expect(TOKEN_SEMICOLON, "Expected ';'");
 
-    return decl;
+    return ast::VarDecl{
+        std::string(name.text),
+        type,
+        is_mut,
+        std::move(value)
+    };
 }
 ast::IfStmt Parser::parse_if() {
     ast::IfStmt ret;
@@ -193,11 +218,18 @@ std::vector<ast::FuncArg> Parser::parse_func_args() {
     if (check(TOKEN_RPAREN)) return args;
 
     while (true) {
-        const ast::Type* type = parse_type();
+        bool is_mut = match(TOKEN_MUT);
 
         Token name = expect(TOKEN_IDENT, "Expected arg name");
+        expect(TOKEN_COLON, "Expected ':' after argument name");
 
-        args.push_back({ std::string(name.text), type });
+        const ast::Type* type = parse_type();
+
+        args.push_back({
+            std::string(name.text),
+            type,
+            is_mut
+        });
 
         if (!match(TOKEN_COMMA)) break;
     }
@@ -237,12 +269,13 @@ ast::Expr Parser::parse_expr(int min_prec) {
         Token op = advance();
 
         if (op.type == TOKEN_EQ) {
+        
             if (!std::holds_alternative<ast::VarExpr>(left.kind)) {
                 error(op.loc, "Invalid assignment target");
                 return left;
             }
 
-            ast::Expr right = parse_expr(prec);
+            ast::Expr right = parse_expr(0);
 
             ast::Expr e;
             e.kind = ast::AssignExpr{
@@ -250,8 +283,7 @@ ast::Expr Parser::parse_expr(int min_prec) {
                 std::make_unique<ast::Expr>(std::move(right))
             };
 
-            left = std::move(e);
-            continue;
+            return e; 
         }
 
         ast::Expr right = parse_expr(prec + 1);
@@ -264,7 +296,6 @@ ast::Expr Parser::parse_expr(int min_prec) {
 }
 
 ast::Expr Parser::parse_prefix() {
-
     if (match(TOKEN_NUMBER)) {
         ast::Expr e;
         e.kind = ast::IntLit{ (int)previous.number };
@@ -290,6 +321,9 @@ ast::Expr Parser::parse_prefix() {
     }
 
     error(current.loc, "Unexpected token");
+    if (!check(TOKEN_EOF)) {
+        advance();
+    }
     return ast::Expr{ ast::NoneExpr{} };
 }
 
@@ -358,6 +392,7 @@ const ast::Type* Parser::get_type_from_token(Token t) {
     switch (t.type) {
         case TOKEN_INT: return ctx.types.get_int();
         case TOKEN_STRING: return ctx.types.get_string();
+        case TOKEN_VOID: return ctx.types.get_void();
         default:
             error(t.loc, "Unknown type");
             return ctx.types.get_int();

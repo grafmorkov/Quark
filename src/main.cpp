@@ -31,14 +31,24 @@ int main(int argc, char **argv)
 
     // Lexer
     quark::lx::Lexer lex(opts.input_file.c_str(), ctx);
-
-    // Parser
-    quark::ps::Parser parser(lex, ctx);
-    auto ast = parser.parse();
-
+    std::vector<std::unique_ptr<ast::Stmt>> ast;
+    try {
+        // Parser
+        quark::ps::Parser parser(lex, ctx);
+        ast = parser.parse();
+    } catch (const std::exception& e) {
+        utils::logger::error(std::string("[IR GEN] ") + e.what());
+        return 1;
+    }
     // Semantic
     quark::sm::SemanticAnalyzer sem(ctx);
-    sem.analyze(ast);
+    try {
+        sem.analyze(ast);
+    }
+    catch (const std::exception& e) {
+        utils::logger::error(std::string("[IR GEN] ") + e.what());
+            return 1;
+    }
 
     quark::codegen::IRGenerator irgen;
 
@@ -54,7 +64,7 @@ int main(int argc, char **argv)
         irgen.builder.dump();
     }
 
-    quark::codegen::CGenerator cgen;
+    quark::codegen::CGenerator cgen(ctx.types);
     std::string c_code;
 
     try {

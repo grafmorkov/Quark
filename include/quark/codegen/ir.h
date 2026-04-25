@@ -5,55 +5,60 @@
 #include <vector>
 #include <memory>
 
+#include "quark/ast.h"
+
 namespace quark::codegen {
 
-// VALUES 
-
+// VALUES
 struct IRValue {
     std::string name;
+    const quark::ast::Type* type; 
 };
 
-//  OPS 
-
+// OPS
 enum class IRBinaryOp {
     Add,
     Sub,
     Mul,
     Div,
+    Eq,      // ==
+    NotEq,   // !=
+    Lt,      // <
+    Lte,     // <=
+    Gt,      // >
+    Gte,     // >=
 };
 
 // INST FORWARD DECL
-
 struct IRBinary;
 struct IRStore;
 struct IRReturn;
 struct IRBranch;
 struct IRAlloc;
 struct IRJump;
+struct IRCall;
 
-//  INST VARIANT 
-
+// INST VARIANT
 using IRInst = std::variant<
     IRBinary,
     IRStore,
     IRReturn,
     IRBranch,
     IRAlloc,
-    IRJump
+    IRJump,
+    IRCall
 >;
 
-//  BLOCK 
-
+// BLOCK
 struct IRBlock {
     std::string name;
     std::vector<IRInst> inst;
-        bool terminated = false;
+    bool terminated = false;
 
     void dump() const;
 };
 
-// INSTRUCTIONS 
-
+// INSTRUCTIONS
 struct IRBinary {
     IRBinaryOp op;
     IRValue dst;
@@ -61,10 +66,12 @@ struct IRBinary {
     IRValue rhs;
 };
 
-struct IRAlloc{
+struct IRAlloc {
     std::string name;
-};
+    const quark::ast::Type* type;
 
+    IRAlloc(std::string n, const quark::ast::Type* t) : name(n), type(t) {}
+};
 
 struct IRStore {
     IRValue target;
@@ -85,13 +92,18 @@ struct IRJump {
     IRBlock* target;
 };
 
-// ---- INSTRUCTION DUMP ----
+struct IRCall {
+    IRValue callee;
+    std::vector<IRValue> args;
+    IRValue dst;
+};
 
+// ---- INSTRUCTION DUMP ----
 void dump_instr(const IRBinary& i);
 void dump_instr(const IRStore& i);
 void dump_instr(const IRReturn& i);
 void dump_instr(const IRBranch& i);
 void dump_instr(const IRJump& i);
-
+void dump_instr(const IRCall& i);
 
 } // namespace quark::codegen

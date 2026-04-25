@@ -1,4 +1,7 @@
 #include "quark/symbol_table.h"
+#include "utils/logger.h"
+
+using namespace utils::logger;
 
 namespace quark::symb_t {
 
@@ -13,9 +16,10 @@ namespace quark::symb_t {
         scopes.pop_back();
     }
 
-    bool SymbolTable::declare(const std::string& name, const ast::Type* type) {
+    bool SymbolTable::declare(const std::string& name, const ast::Type* type, bool is_mut, bool initialized) {
         if (scopes.empty()) {
-            scopes.emplace_back();
+            error("No active scope");
+            return false;
         }
         auto& current = scopes.back();
 
@@ -23,7 +27,7 @@ namespace quark::symb_t {
             return false;
         }
 
-        current[name] = Symbol{ name, type };
+        current[name] = Symbol{ name, type, is_mut, initialized};
         return true;
     }
 
@@ -35,6 +39,16 @@ namespace quark::symb_t {
             }
         }
         return nullptr;
+    }
+    void SymbolTable::mark_initialized(const std::string& name) {
+        auto sym = lookup(name);
+
+        if (!sym) {
+            error("There is no declared variable: " + name);
+            return;
+        }
+
+        sym->initialized = true;
     }
 
 }
