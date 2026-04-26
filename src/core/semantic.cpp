@@ -53,7 +53,7 @@ void SemanticAnalyzer::analyze_stmt(const ast::Stmt* stmt) {
 
 void SemanticAnalyzer::analyze_stmt_node(const ast::VarDecl& var) {
     if (!var.is_mut && !var.value) {
-        crash("[Semantic]: Immutable variable must be initialized: " + var.name);
+        crash("Immutable variable must be initialized: " + var.name);
         return;
     }
 
@@ -64,13 +64,13 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::VarDecl& var) {
         if (!value_type) return;
 
         if (!is_assignable(var.type, value_type)) {
-            crash("[Semantic]: Type mismatch in variable initialization: " + var.name);
+            crash("Type mismatch in variable initialization: " + var.name);
             return;
         }
     }
 
     if (!ctx.symbols.declare(var.name, var.type, var.is_mut, var.value != nullptr)) {
-        crash("[Semantic]: Variable already declared: " + var.name);
+        crash("Variable already declared: " + var.name);
         return;
     }
 }
@@ -89,12 +89,12 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::ReturnStmt& ret) {
     }
 
     if (!current_function_return_type) {
-        crash("[Semantic]: Return outside function");
+        crash("Return outside function");
         return;
     }
 
     if (!is_assignable(current_function_return_type, value_type)) {
-        crash("[Semantic]: Return type mismatch");
+        crash("Return type mismatch");
     }
 }
 
@@ -106,7 +106,7 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::FuncStmt& func) {
 
     for (const auto& arg : func.args) {
         if (!ctx.symbols.declare(arg.name, arg.type, arg.is_mut, true)) {
-            crash("[Semantic]: Argument already declared: " + arg.name);
+            crash("Argument already declared: " + arg.name);
             continue;
         }
     }
@@ -158,12 +158,12 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::VarExpr& var) {
     auto* sym = ctx.symbols.lookup(var.name);
 
     if (!sym) {
-        crash("[Semantic]: Undefined variable: " + var.name);
+        crash("Undefined variable: " + var.name);
         return nullptr;
     }
 
     if (!sym->initialized) {
-        crash("[Semantic]: Use of uninitialized variable: " + var.name);
+        crash("Use of uninitialized variable: " + var.name);
         return nullptr;
     }
 

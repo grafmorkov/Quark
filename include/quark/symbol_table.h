@@ -9,7 +9,6 @@ namespace quark::symb_t{
         std::string name;
         const ast::Type* type;
         bool is_mut;
-        bool is_temp;
         bool initialized;
     };
     class SymbolTable {

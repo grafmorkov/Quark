@@ -46,7 +46,7 @@ int main(int argc, char **argv)
         sem.analyze(ast);
     }
     catch (const std::exception& e) {
-        utils::logger::error(std::string("[semantic] ") + e.what());
+        utils::logger::error(std::string("[Semantic] ") + e.what());
             return 1;
     }
 
