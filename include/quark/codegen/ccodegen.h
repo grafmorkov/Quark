@@ -4,9 +4,11 @@
 #include "codegen.h"
 #include "quark/ast.h"
 #include "quark/type_context.h"
+#include "utils/logger.h"
 
 using namespace quark::ast;
 using namespace quark::types;
+using namespace utils::logger;
 
 namespace quark::codegen {
     namespace {
@@ -43,8 +45,14 @@ namespace quark::codegen {
         CGenerator(const TypeContext& ctx) : type_ctx(ctx) {}
 
         std::string generate(const IRBuilder& builder) override {
+            for (auto& block_ptr : builder.blocks) {
+                if (!block_ptr->terminated) {
+                    crash("Block not terminated: " + block_ptr->name);
+                }
+            }
+
             out << "#include <stdint.h>\n";
-            out << "#include <stdbool.h>\n\n"; // for bool
+            out << "#include <stdbool.h>\n\n";
 
             out << "int main() {\n";
 

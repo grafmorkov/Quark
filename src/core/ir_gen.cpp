@@ -9,7 +9,10 @@ namespace quark::codegen {
 
 void IRBuilder::ensure_block() {
     if (!current_block)
-        throw std::runtime_error("No current IR block set");
+        crash("No current IR block set");
+
+    if (current_block->terminated)
+        crash("Block already terminated: " + current_block->name);
 }
 
 IRValue IRBuilder::make_temp() {
@@ -35,6 +38,7 @@ IRValue IRBuilder::create_binary(IRBinaryOp op, IRValue lhs, IRValue rhs) {
     ensure_block();
 
     IRValue res = make_temp();
+    res.type = lhs.type;
 
     current_block->inst.push_back(IRBinary{
         op, res, lhs, rhs
@@ -74,6 +78,9 @@ void IRBuilder::create_return(IRValue value) {
     ensure_block();
 
     current_block->inst.push_back(IRReturn{ value });
+
+    current_block->terminated = true;
+    current_block = nullptr;
 }
 
 void IRBuilder::create_branch(IRValue cond, IRBlock* then_block, IRBlock* else_block) {
@@ -82,12 +89,18 @@ void IRBuilder::create_branch(IRValue cond, IRBlock* then_block, IRBlock* else_b
     current_block->inst.push_back(IRBranch{
         cond, then_block, else_block
     });
+
+    current_block->terminated = true;
+    current_block = nullptr;
 }
 
 void IRBuilder::create_jump(IRBlock* target) {
     ensure_block();
 
     current_block->inst.push_back(IRJump{ target });
+
+    current_block->terminated = true;
+    current_block = nullptr;
 }
 
 // IRGenerator 
@@ -119,6 +132,14 @@ void IRGenerator::gen_stmt(const Stmt& stmt) {
 void IRGenerator::gen_function(const FuncStmt& func) {
     for (auto& stmt : func.body->statements)
         gen_stmt(*stmt);
+
+    if (builder.current_block && !builder.current_block->terminated) {
+        if (func.return_t->kind == Type::Void) {
+            builder.create_return(builder.create_const(0));
+        } else {
+            crash("Missing return in non-void function");
+        }
+    }
 }
 
 // EXPRESSIONS
@@ -213,7 +234,9 @@ void IRGenerator::gen_stmt_node(const IfStmt& node) {
     for (auto& s : node.thenBranch->statements)
         gen_stmt(*s);
 
-    builder.create_jump(end_block);
+    if (!then_block->terminated) {
+        builder.create_jump(end_block);
+    }
 
     // ELSE
     if (node.elseBranch) {
@@ -221,7 +244,9 @@ void IRGenerator::gen_stmt_node(const IfStmt& node) {
         for (auto& s : node.elseBranch->statements)
             gen_stmt(*s);
 
-        builder.create_jump(end_block);
+        if (!else_block->terminated) {
+            builder.create_jump(end_block);
+        }
     }
 
     builder.set_insert_point(end_block);
@@ -259,7 +284,7 @@ IRBinaryOp IRGenerator::map_op(BinaryOp op) {
         case BinaryOp::Lte:   return IRBinaryOp::Lte;   
         case BinaryOp::Gt:    return IRBinaryOp::Gt;    
         case BinaryOp::Gte:   return IRBinaryOp::Gte;   
-        default: throw std::runtime_error("Unsupported binary op");
+        default: crash("Unsupported binary op");
     }
 }
 }
