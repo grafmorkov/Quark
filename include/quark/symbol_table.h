@@ -10,13 +10,15 @@ namespace quark::symb_t{
         const ast::Type* type;
         bool is_mut;
         bool initialized;
+        const std::vector<ast::Attribute>* attrs;
     };
     class SymbolTable {
         public:
             void enter_scope();
             void exit_scope();
 
-            bool declare(const std::string& name, const ast::Type* type, bool is_mut, bool initialized);
+            bool declare(const ast::VarDecl& decl);          
+            bool declare(const ast::FuncArg& fnArg);
             void mark_initialized(const std::string& name);
             Symbol* lookup(const std::string& name);
 

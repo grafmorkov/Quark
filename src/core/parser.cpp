@@ -106,10 +106,7 @@ Token Parser::peek(int n) {
 // Stmts
 
 ast::Stmt Parser::parse_statement() {
-    if (is_var_decl()) {
-        return ast::Stmt{ parse_var_decl() };
-    }
-
+    if (is_var_decl())  return ast::Stmt{ parse_var_decl() };
     if (match(TOKEN_RETURN)) return ast::Stmt{ parse_return() };
     if (match(TOKEN_IF))     return ast::Stmt{ parse_if() };
     if (match(TOKEN_WHILE))  return ast::Stmt{ parse_while() };
@@ -126,35 +123,58 @@ ast::Stmt Parser::parse_statement() {
 }
 bool Parser::is_var_decl() {
     if (check(TOKEN_MUT)) {
-        return peek(0).type == TOKEN_IDENT &&
-               peek(1).type == TOKEN_COLON;
+        return peek(0).type == TOKEN_IDENT && peek(1).type == TOKEN_COLON;
     }
-
-    return check(TOKEN_IDENT) &&
-           peek(0).type == TOKEN_COLON;
+    return check(TOKEN_IDENT) && peek(0).type == TOKEN_COLON;
 }
 ast::VarDecl Parser::parse_var_decl() {
-    bool is_mut = match(TOKEN_MUT);
-
-    Token name = expect(TOKEN_IDENT, "Expected variable name");
-    expect(TOKEN_COLON, "Expected ':'");
-
-    const Type* type = parse_type();
-
-    std::unique_ptr<ast::Expr> value = nullptr;
-
-    if (match(TOKEN_EQ)) {
-        value = std::make_unique<ast::Expr>(parse_expr(0));
+    ast::VarDecl ret;
+    if(match(TOKEN_MUT)){
+        ret.is_mut = true;
     }
 
-    expect(TOKEN_SEMICOLON, "Expected ';'");
+    Token name = expect(TOKEN_IDENT, "Expected the name of the variable");
+    ret.name = name.text;
 
-    return ast::VarDecl{
-        std::string(name.text),
-        type,
-        is_mut,
-        std::move(value)
-    };
+    ret.type = nullptr;
+    ret.value.reset();
+
+    if (match(TOKEN_COLON)) {
+        ret.type = parse_type();
+
+        if (match(TOKEN_EQ)) {
+            ret.value = std::make_unique<ast::Expr>(parse_expr(0));
+        }
+    }
+
+    ret.attributes = parse_attributes();
+    expect(TOKEN_SEMICOLON, "Expected ';' after declaration");
+    return ret;
+}
+std::vector<ast::Attribute> Parser::parse_attributes() {
+    std::vector<ast::Attribute> attrs;
+
+    while (match(TOKEN_AT)) {
+        Token name = expect(TOKEN_IDENT, "Expected attribute name");
+
+        ast::Attribute attr;
+        attr.name = name.text;
+
+        if (match(TOKEN_LPAREN)) {
+            if (!check(TOKEN_RPAREN)) {
+                do {
+                    attr.args.push_back(
+                        std::make_unique<ast::Expr>(parse_expr(0))
+                    );
+                } while (match(TOKEN_COMMA));
+            }
+            expect(TOKEN_RPAREN, "Expected ')'");
+        }
+
+        attrs.push_back(std::move(attr));
+    }
+
+    return attrs;
 }
 ast::IfStmt Parser::parse_if() {
     ast::IfStmt ret;
@@ -269,7 +289,7 @@ ast::Expr Parser::parse_expr(int min_prec) {
         Token op = advance();
 
         if (op.type == TOKEN_EQ) {
-        
+
             if (!std::holds_alternative<ast::VarExpr>(left.kind)) {
                 error(op.loc, "Invalid assignment target");
                 return left;
@@ -283,11 +303,11 @@ ast::Expr Parser::parse_expr(int min_prec) {
                 std::make_unique<ast::Expr>(std::move(right))
             };
 
-            return e; 
+            return e;
         }
 
         ast::Expr right = parse_expr(prec + 1);
-        
+
 
         left = make_binary(std::move(left), std::move(right), op.type);
     }
@@ -301,7 +321,6 @@ ast::Expr Parser::parse_prefix() {
         e.kind = ast::IntLit{ (int)previous.number };
         return e;
     }
-
     if (match(TOKEN_STRING)) {
         ast::Expr e;
         e.kind = ast::StringLit{ std::string(previous.text) };

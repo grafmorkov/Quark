@@ -86,6 +86,7 @@ namespace quark::lx {
             case '-': return make_token(TOKEN_MINUS);
             case '*': return make_token(TOKEN_STAR);
             case ';': return make_token(TOKEN_SEMICOLON);
+            case '@': return make_token(TOKEN_AT);
             case '?': 
                 if(match('?')){
                     return make_token(TOKEN_QUESTION_QUESTION);
@@ -165,6 +166,7 @@ namespace quark::lx {
             case str_hash("float"): return make_token(TOKEN_FLOAT);
             case str_hash("void"): return make_token(TOKEN_VOID);
             case str_hash("mut"): return make_token(TOKEN_MUT);
+            case str_hash("struct"): return make_token(TOKEN_STRUCT);
         }
         return make_token(TOKEN_IDENT);
     }

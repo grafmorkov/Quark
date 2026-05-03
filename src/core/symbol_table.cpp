@@ -16,18 +16,44 @@ namespace quark::symb_t {
         scopes.pop_back();
     }
 
-    bool SymbolTable::declare(const std::string& name, const ast::Type* type, bool is_mut, bool initialized) {
+    bool SymbolTable::declare(const ast::VarDecl& decl) {
         if (scopes.empty()) {
             error("No active scope");
             return false;
         }
         auto& current = scopes.back();
 
-        if (current.find(name) != current.end()) {
+        if (current.find(decl.name) != current.end()) {
             return false;
         }
 
-        current[name] = Symbol{ name, type, is_mut, initialized};
+        current[decl.name] = Symbol{
+            decl.name,
+            decl.type,
+            decl.is_mut,
+            decl.value != nullptr,
+            &decl.attributes
+        };
+        return true;
+    }
+    bool SymbolTable::declare(const ast::FuncArg& fnArg){
+        if (scopes.empty()) {
+            error("No active scope");
+            return false;
+        }
+        auto& current = scopes.back();
+
+        if (current.find(fnArg.name) != current.end()) {
+            return false;
+        }
+
+        current[fnArg.name] = Symbol{
+            fnArg.name,
+            fnArg.type,
+            fnArg.is_mut,
+            true,
+            &std::vector<ast::Attribute>()
+        };
         return true;
     }
 

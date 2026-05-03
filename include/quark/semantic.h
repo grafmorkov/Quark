@@ -23,12 +23,15 @@ namespace quark::sm{
 
             const ast::Type* current_function_return_type = nullptr;
 
-            void analyze_stmt_node(const ast::VarDecl& var);
+            void analyze_stmt_node(const ast::Decl& decl);
             void analyze_stmt_node(const ast::ExprStmt& expr);
             void analyze_stmt_node(const ast::ReturnStmt& ret);
             void analyze_stmt_node(const ast::FuncStmt& func);
             void analyze_stmt_node(const ast::IfStmt& stmt);
             void analyze_stmt_node(const ast::WhileStmt& stmt);
+            
+            void analyze_var_decl(const ast::VarDecl& var);
+            void analyze_struct_decl(const ast::StructDecl& str);
             
             const ast::Type* analyze_expr_node(const ast::IntLit&);
             const ast::Type* analyze_expr_node(const ast::StringLit&);
@@ -38,6 +41,9 @@ namespace quark::sm{
             const ast::Type* analyze_expr_node(const ast::BlockExpr& block);
             const ast::Type* analyze_expr_node(const ast::BinaryExpr& b);
             const ast::Type* analyze_expr_node(const ast::CallExpr& call);
+
+            const ast::Type* analyze_field(const ast::Field& field);
+            const ast::Type* analyze_attribute(const ast::Attribute& attribute);
             
             const ast::Type* analyze_block(const ast::BlockExpr* block);
         };

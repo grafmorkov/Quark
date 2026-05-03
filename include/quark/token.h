@@ -22,8 +22,10 @@ namespace quark{
         TOKEN_WHILE,
         TOKEN_RETURN,
         TOKEN_FUNC,
+        TOKEN_STRUCT,
         TOKEN_VAR,
-        TOKEN_MUT, 
+        TOKEN_MUT,
+        TOKEN_AT, // @
 
         // types
         TOKEN_VOID,

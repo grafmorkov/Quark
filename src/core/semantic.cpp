@@ -51,7 +51,20 @@ void SemanticAnalyzer::analyze_stmt(const ast::Stmt* stmt) {
 
 // Smtm Nodes
 
-void SemanticAnalyzer::analyze_stmt_node(const ast::VarDecl& var) {
+void SemanticAnalyzer::analyze_stmt_node(const ast::Decl& decl) {
+    if (auto* var = dynamic_cast<const ast::VarDecl*>(&decl)) {
+        analyze_var_decl(*var);
+        return;
+    }
+
+    if (auto* str = dynamic_cast<const ast::StructDecl*>(&decl)) {
+        analyze_struct_decl(*str);
+        return;
+    }
+
+    crash("Unknown decl");
+}
+void SemanticAnalyzer::analyze_var_decl(const ast::VarDecl& var) {
     if (!var.is_mut && !var.value) {
         crash("Immutable variable must be initialized: " + var.name);
         return;
@@ -69,12 +82,14 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::VarDecl& var) {
         }
     }
 
-    if (!ctx.symbols.declare(var.name, var.type, var.is_mut, var.value != nullptr)) {
+    if (!ctx.symbols.declare(var)) {
         crash("Variable already declared: " + var.name);
         return;
     }
 }
-// TODO: Report error
+void SemanticAnalyzer::analyze_struct_decl(const ast::StructDecl& str){
+    // TODO
+}
 void SemanticAnalyzer::analyze_stmt_node(const ast::ExprStmt& expr) {
     analyze_expr(expr.expr.get());
 }
@@ -105,7 +120,7 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::FuncStmt& func) {
     ctx.symbols.enter_scope();
 
     for (const auto& arg : func.args) {
-        if (!ctx.symbols.declare(arg.name, arg.type, arg.is_mut, true)) {
+        if (!ctx.symbols.declare(arg)) {
             crash("Argument already declared: " + arg.name);
             continue;
         }
@@ -179,7 +194,6 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::AssignExpr& asg)
 
     if (!std::holds_alternative<ast::VarExpr>(asg.target->kind)) {
         crash("Assignment target must be a variable");
-        return nullptr;
     }
 
     const auto& var = std::get<ast::VarExpr>(asg.target->kind);
@@ -187,17 +201,14 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::AssignExpr& asg)
     auto* sym = ctx.symbols.lookup(var.name);
     if (!sym) {
         crash("Undefined variable: " + var.name);
-        return nullptr;
     }
 
     if (!sym->is_mut) {
         crash("Cannot assign to immutable variable: " + var.name);
-        return nullptr;
     }
 
     if (!is_assignable(sym->type, value_type)) {
         crash("Type mismatch in assignment");
-        return nullptr;
     }
 
     sym->initialized = true;
@@ -212,7 +223,6 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::BinaryExpr& b) {
 
     if (!types_equal(l, r)) {
         crash("Type mismatch in binary expression");
-        return nullptr;
     }
 
     return l;
@@ -234,5 +244,10 @@ const ast::Type* SemanticAnalyzer::analyze_block(const ast::BlockExpr* block) {
     ctx.symbols.exit_scope();
     return ctx.types.get_void();
 }
-
+const ast::Type* SemanticAnalyzer::analyze_field(const ast::Field& field){
+    return nullptr;
+}
+const ast::Type* SemanticAnalyzer::analyze_attribute(const ast::Attribute& attribute){
+    return nullptr;
+}
 } // namespace quark::sm

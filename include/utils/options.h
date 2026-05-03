@@ -5,6 +5,10 @@
 #include <unordered_map>
 #include <stdexcept>
 
+#include "logger.h"
+
+using namespace utils::logger;
+
 namespace utils::options {
 
     struct Options {
@@ -53,7 +57,7 @@ namespace utils::options {
                 }
             } else {
                 if (!opts.input_file.empty()) {
-                    throw std::runtime_error("Multiple input files are not supported: '" 
+                    fatal("Multiple input files are not supported: '" 
                         + opts.input_file + "' and '" + arg + "'");
                 }
                 opts.input_file = arg;

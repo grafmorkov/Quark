@@ -23,6 +23,7 @@ namespace quark::ast {
             Void,
         } kind;
     };
+    struct Field;
 
     struct IntLit {
         int value;
@@ -67,6 +68,20 @@ namespace quark::ast {
     struct BlockExpr {
         std::vector<std::unique_ptr<Stmt>> statements;
     };
+    struct Attribute {
+        std::string name;
+        std::vector<std::unique_ptr<Expr>> args;
+
+        Attribute() = default;
+
+        Attribute(std::string name_, std::vector<std::unique_ptr<Expr>> args_)
+            : name(std::move(name_)), args(std::move(args_)) {}
+
+        Attribute(const Attribute&) = delete;
+        Attribute& operator=(const Attribute&) = delete;
+        Attribute(Attribute&&) noexcept = default;
+        Attribute& operator=(Attribute&&) noexcept = default;
+    }; 
 
     using ExprKind = std::variant<
         IntLit,
@@ -80,14 +95,14 @@ namespace quark::ast {
 
     struct Expr {
         ExprKind kind;
-        SourceLocation loc;
-    };
+        SourceLocation loc{};
 
-    struct VarDecl {
-        std::string name;
-        const Type* type;
-        bool is_mut;
-        std::unique_ptr<Expr> value; // nullptr if there is no initialization
+        Expr() = default;
+        Expr(const Expr&) = delete;
+        Expr& operator=(const Expr&) = delete;
+
+        Expr(Expr&&) = default;
+        Expr& operator=(Expr&&) = default;
     };
 
     struct ExprStmt {
@@ -118,8 +133,32 @@ namespace quark::ast {
         std::vector<FuncArg> args;
         const Type* return_t;
     };
+    struct Decl {
+        virtual ~Decl() = default;
+    };
+
+    struct NamedDecl : Decl {
+        std::string name;
+        std::vector<Attribute> attributes;
+    };
+
+    struct Field {
+        std::string name;
+        const Type* type;
+        std::unique_ptr<Expr> default_value;
+    };
+
+    struct VarDecl : NamedDecl {
+        const Type* type;
+        std::unique_ptr<Expr> value;
+        bool is_mut;
+    };
+
+    struct StructDecl : NamedDecl {
+        std::vector<Field> fields;
+    };
     using StmtKind = std::variant<
-        VarDecl,
+        Decl,
         IfStmt,
         WhileStmt,
         ReturnStmt,
@@ -129,6 +168,9 @@ namespace quark::ast {
 
     struct Stmt {
         StmtKind kind;
-        SourceLocation loc;
+        SourceLocation loc{};
+
+        Stmt() = default;
+        explicit Stmt(StmtKind k) : kind(std::move(k)) {}
     };
 }
