@@ -124,7 +124,7 @@ const ast::Type* SemanticAnalyzer::resolve_lvalue(const ast::Expr* expr) {
     // FIELD ACCESS (a.b)
     if (auto* field = std::get_if<ast::FieldAccessExpr>(&expr->kind)) {
 
-        const ast::Type* base_type = resolve_lvalue(field->base.get());
+        const ast::Type* base_type = resolve_lvalue(field->base);
         if (!base_type) return nullptr;
 
         if (base_type->kind != ast::Type::Struct) {
@@ -160,13 +160,13 @@ const ast::Type* SemanticAnalyzer::resolve_lvalue(const ast::Expr* expr) {
 // Entry
 
 void SemanticAnalyzer::analyze(
-    const std::vector<std::unique_ptr<ast::Stmt>>& stmts
+    const std::vector<ast::Stmt*>& stmts
 ) {
     ScopeGuard scope(ctx.symbols);
 
     for (const auto& stmt : stmts) {
         if (stmt) {
-            analyze_stmt(stmt.get());
+            analyze_stmt(stmt);
         }
     }
 }
@@ -187,7 +187,7 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::VarDecl& var) {
     const ast::Type* value_type = nullptr;
 
     if (var.value) {
-        value_type = analyze_expr(var.value.get());
+        value_type = analyze_expr(var.value);
         if (!value_type) return;
 
         if (!is_assignable(var.type, value_type)) {
@@ -242,13 +242,13 @@ void SemanticAnalyzer::analyze_attribute(const ast::Attribute& attribute) {
 
 void SemanticAnalyzer::analyze_stmt_node(const ast::ExprStmt& expr) {
     if (expr.expr) {
-        analyze_expr(expr.expr.get());
+        analyze_expr(expr.expr);
     }
 }
 
 void SemanticAnalyzer::analyze_stmt_node(const ast::ReturnStmt& ret) {
     const ast::Type* value_type = ret.value
-        ? analyze_expr(ret.value.get())
+        ? analyze_expr(ret.value)
         : ctx.types.get_void();
 
     if (!current_function_return_type) {
@@ -279,7 +279,7 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::FuncStmt& func) {
     if (func.body) {
         for (const auto& stmt : func.body->statements) {
             if (stmt) {
-                analyze_stmt(stmt.get());
+                analyze_stmt(stmt);
             }
         }
     }
@@ -289,25 +289,25 @@ void SemanticAnalyzer::analyze_stmt_node(const ast::FuncStmt& func) {
 
 void SemanticAnalyzer::analyze_stmt_node(const ast::IfStmt& stmt) {
     if (stmt.condition) {
-        analyze_expr(stmt.condition.get());
+        analyze_expr(stmt.condition);
     }
 
     if (stmt.thenBranch) {
-        analyze_block(stmt.thenBranch.get());
+        analyze_block(stmt.thenBranch);
     }
 
     if (stmt.elseBranch) {
-        analyze_block(stmt.elseBranch.get());
+        analyze_block(stmt.elseBranch);
     }
 }
 
 void SemanticAnalyzer::analyze_stmt_node(const ast::WhileStmt& stmt) {
     if (stmt.condition) {
-        analyze_expr(stmt.condition.get());
+        analyze_expr(stmt.condition);
     }
 
     if (stmt.body) {
-        analyze_block(stmt.body.get());
+        analyze_block(stmt.body);
     }
 }
 
@@ -356,7 +356,7 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::NoneExpr&) {
 }
 
 const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::AssignExpr& asg) {
-    const ast::Type* value_type = analyze_expr(asg.value.get());
+    const ast::Type* value_type = analyze_expr(asg.value);
     if (!value_type) return nullptr;
 
     if (!asg.target) {
@@ -364,7 +364,7 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::AssignExpr& asg)
         return nullptr;
     }
 
-    const ast::Type* target_type = resolve_lvalue(asg.target.get());
+    const ast::Type* target_type = resolve_lvalue(asg.target);
     if (!target_type) return nullptr;
 
     if (!is_assignable(target_type, value_type)) {
@@ -382,7 +382,7 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::AssignExpr& asg)
     return target_type;
 }
 const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::FieldAccessExpr& node) {
-    const ast::Type* base = analyze_expr(node.base.get());
+    const ast::Type* base = analyze_expr(node.base);
     if (!base) return nullptr;
 
     if (base->kind != ast::Type::Struct) {
@@ -413,8 +413,8 @@ const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::FieldAccessExpr&
 }
 
 const ast::Type* SemanticAnalyzer::analyze_expr_node(const ast::BinaryExpr& b) {
-    const ast::Type* l = analyze_expr(b.lhs.get());
-    const ast::Type* r = analyze_expr(b.rhs.get());
+    const ast::Type* l = analyze_expr(b.lhs);
+    const ast::Type* r = analyze_expr(b.rhs);
 
     if (!l || !r) return nullptr;
 
@@ -439,7 +439,7 @@ const ast::Type* SemanticAnalyzer::analyze_block(const ast::BlockExpr* block) {
 
     for (const auto& stmt : block->statements) {
         if (stmt) {
-            analyze_stmt(stmt.get());
+            analyze_stmt(stmt);
         }
     }
 

@@ -1,0 +1,3 @@
+[submodule "include/quark-alloc"]
+	path = include/quark-alloc
+	url = https://github.com/grafmorkov/quark-alloc.git

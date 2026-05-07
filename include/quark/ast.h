@@ -52,29 +52,29 @@ namespace quark::ast {
         // ...
     };
     struct BinaryExpr {
-        std::unique_ptr<Expr> lhs;
-        std::unique_ptr<Expr> rhs;
+        Expr* lhs;
+        Expr* rhs;
         BinaryOp op;
     };
 
     struct AssignExpr {
-        std::unique_ptr<Expr> target;
-        std::unique_ptr<Expr> value;
+        Expr* target;
+        Expr* value;
     };
     struct NoneExpr{};
     struct CallExpr {
-        std::unique_ptr<Expr> callee;
-        std::vector<std::unique_ptr<Expr>> args;
+        Expr* callee;
+        std::vector<Expr*> args;
     };
 
     struct BlockExpr {
-        std::vector<std::unique_ptr<Stmt>> statements;
+        std::vector<Stmt*> statements;
     };
     struct Attribute {
         std::string name; // TODO: Checks in semantic
     }; 
     struct FieldAccessExpr {
-        std::unique_ptr<Expr> base;
+        Expr* base;
         std::string field;
     };
 
@@ -102,21 +102,21 @@ namespace quark::ast {
     };
 
     struct ExprStmt {
-        std::unique_ptr<Expr> expr;
+        Expr* expr;
     };
     struct IfStmt {
-        std::unique_ptr<Expr> condition;
-        std::unique_ptr<BlockExpr> thenBranch;
-        std::unique_ptr<BlockExpr> elseBranch;
+        Expr* condition;
+        BlockExpr* thenBranch;
+        BlockExpr* elseBranch;
     };
 
     struct WhileStmt {
-        std::unique_ptr<Expr> condition;
-        std::unique_ptr<BlockExpr> body;
+        Expr* condition;
+        BlockExpr* body;
     };
 
     struct ReturnStmt {
-        std::unique_ptr<Expr> value;
+        Expr* value;
     };
     struct FuncArg {
         std::string name;
@@ -125,7 +125,7 @@ namespace quark::ast {
     };
     struct FuncStmt {
         std::string name;
-        std::unique_ptr<BlockExpr> body;
+        BlockExpr* body;
         std::vector<FuncArg> args;
         const Type* return_t;
     };
@@ -137,17 +137,17 @@ namespace quark::ast {
 
     struct VarDecl : Decl {
         const Type* type;
-        std::unique_ptr<Expr> value;
+        Expr* value;
         bool is_mut;
     };
     struct FieldDecl : Decl {
         const Type* type;
-        std::unique_ptr<Expr> default_value;
+        Expr* default_value;
         bool is_mut;
     };
 
     struct StructDecl : Decl {
-        std::vector<std::unique_ptr<FieldDecl>> fields;
+        std::vector<FieldDecl*> fields;
         bool is_mut;
     };
     struct StructLayout {

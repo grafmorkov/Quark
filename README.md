@@ -48,10 +48,21 @@ func main() void {
     }
 }
 ```
-
 ---
+## Requirements
 
-## Build
+Clone the repository with submodules:
+
+```bash
+git clone --recursive https://github.com/grafmorkov/quark-lang.git
+```
+You also need:
+
+**Clang (or another C compiler)**
+**CMake 3.20+**
+```
+
+## Build(Compilation)
 
 ```bash
 ./quark example.qk --build
@@ -162,7 +173,7 @@ func main() void {
   - [x] basic struct definition
   - [x] field parsing
   - [x] struct in AST
-  - [ ] struct checking in semantic
+  - [x] struct checking in semantic
   - [ ] struct methods (optional future)
 
 - [x] Attributes
@@ -178,12 +189,11 @@ func main() void {
 
 ### Memory
 
-- [ ] Arena Allocator
-  - [ ] bump allocator implementation
-  - [ ] scoped lifetime (reset / pop state)
-  - [ ] integration with AST allocation
-  - [ ] replace raw new/delete in parser
-  - [ ] benchmark vs std::unique_ptr approach
+- [x] Arena Allocator
+  - [x] bump allocator implementation
+  - [x] scoped lifetime (reset / pop state)
+  - [x] integration with AST allocation
+  - [x] replace raw new/delete in parser
 
 ---
 

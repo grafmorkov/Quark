@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "quark/ast.h"
+#include "quark/compiler_context.h"
 
 using namespace quark::ast;
 
@@ -16,11 +17,12 @@ namespace quark::codegen {
 
 struct IRBuilder {
     int temp_id = 0;
+    CompilerContext& ctx; 
 
-    std::vector<std::unique_ptr<IRBlock>> blocks;
+    std::vector<IRBlock*> blocks;
     std::unordered_map<std::string, IRValue> variables;
     std::unordered_map<std::string, StructLayout> struct_layouts;
-    std::vector<std::unique_ptr<IRStruct>> strs;
+    std::vector<IRStruct*> strs;
     IRBlock* current_block = nullptr;
 
     void ensure_block();
@@ -38,15 +40,19 @@ struct IRBuilder {
     void create_branch(IRValue cond, IRBlock* then_block, IRBlock* else_block);
     void create_jump(IRBlock* target);
     void dump() const;
+
+    IRBuilder(CompilerContext& c)
+        : ctx(c) {}
+
 };
 
 // IRGenerator
 
 struct IRGenerator {
     IRBuilder builder;
-
+    CompilerContext& ctx;
     // ENTRY POINT
-    void gen_program(const std::vector<std::unique_ptr<Stmt>>& program);
+    void gen_program(const std::vector<Stmt*>& program);
 
     // TOP LEVEL
     void gen_stmt(const Stmt& stmt);
@@ -54,7 +60,8 @@ struct IRGenerator {
 
     // EXPRESSIONS
     IRValue gen_expr(const Expr& expr);
-    
+    IRGenerator(CompilerContext& _ctx)
+        : builder(_ctx), ctx(_ctx) {}
 private:
     // EXPRESSIONS 
 

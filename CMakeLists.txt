@@ -23,7 +23,6 @@ add_library(libquark
 target_include_directories(libquark
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/include/quark
         ${PROJECT_SOURCE_DIR}/include/utils
 )
 

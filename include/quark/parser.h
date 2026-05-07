@@ -15,7 +15,7 @@ namespace quark::ps {
         public:
             Parser(lx::Lexer& lex, CompilerContext& ctx);
 
-            std::vector<std::unique_ptr<ast::Stmt>> parse();
+            std::vector<ast::Stmt*> parse();
 
         private:
             lx::Lexer& lexer;

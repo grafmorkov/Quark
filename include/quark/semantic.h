@@ -10,7 +10,7 @@
 namespace quark::sm{
     class SemanticAnalyzer {
         public:
-            void analyze(const std::vector<std::unique_ptr<ast::Stmt>>& stmts);
+            void analyze(const std::vector<ast::Stmt*>& stmts);
             SemanticAnalyzer(CompilerContext& _ctx): ctx(_ctx) {}
 
         private:

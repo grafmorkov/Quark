@@ -27,9 +27,9 @@ int main(int argc, char **argv)
         }
 
         auto start = high_resolution_clock::now();
+        memory::Arena arena;
 
         quark::CompilerContext ctx;
-
         // Lexer
         quark::lx::Lexer lex(opts.input_file.c_str(), ctx);
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
         sem.analyze(ast);
 
         // IRGen
-        quark::codegen::IRGenerator irgen;
+        quark::codegen::IRGenerator irgen(ctx);
         irgen.gen_program(ast);
 
         if (opts.emit_ir) {

@@ -20,8 +20,8 @@ IRValue IRBuilder::make_temp() {
 }
 
 IRBlock* IRBuilder::create_block(const std::string& name) {
-    blocks.push_back(std::make_unique<IRBlock>());
-    auto* block = blocks.back().get();
+    blocks.push_back(memory::make_default<IRBlock>(ctx.arena));
+    auto* block = blocks.back();
     block->name = name;
     return block;
 }
@@ -104,7 +104,7 @@ void IRBuilder::create_jump(IRBlock* target) {
 }
 
 // IRGenerator 
-void IRGenerator::gen_program(const std::vector<std::unique_ptr<Stmt>>& program) {
+void IRGenerator::gen_program(const std::vector<Stmt*>& program) {
     auto* entry = builder.create_block("entry");
     builder.set_insert_point(entry);
     
