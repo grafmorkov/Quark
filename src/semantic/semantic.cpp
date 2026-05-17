@@ -134,7 +134,19 @@ const ast::Type* resolve_struct_field(
     crash("Unknown field: " + field_name);
     return nullptr;
 }
+const ast::VarExpr* get_root_var(const ast::Expr* expr) {
+    if (!expr) return nullptr;
 
+    if (const auto* v = std::get_if<ast::VarExpr>(&expr->kind)) {
+        return v;
+    }
+
+    if (const auto* f = std::get_if<ast::FieldExpr>(&expr->kind)) {
+        return get_root_var(f->base);
+    }
+
+    return nullptr;
+}
 } // namespace
 
 void SemanticAnalyzer::analyze(const std::vector<ast::Stmt*>& stmts) {
@@ -409,8 +421,8 @@ const ast::Type* SemanticAnalyzer::analyze_assign(const ast::AssignExpr& asg) {
         return nullptr;
     }
 
-    if (const auto* var = std::get_if<ast::VarExpr>(&asg.target->kind)) {
-        if (auto* sym = ctx.symbols.lookup(var->name)) {
+    if (const auto* root = get_root_var(asg.target)) {
+        if (auto* sym = ctx.symbols.lookup(root->name)) {
             mark_symbol_initialized(*sym);
         }
     }
